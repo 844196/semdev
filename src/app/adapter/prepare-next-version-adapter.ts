@@ -1,6 +1,6 @@
 import { findFirst } from 'fp-ts/lib/array';
 import { right } from 'fp-ts/lib/Either';
-import { union } from 'fp-ts/lib/Set';
+import { insert, union } from 'fp-ts/lib/Set';
 import { fromEither, tryCatch } from 'fp-ts/lib/TaskEither';
 import * as semver from 'semver';
 import { DefaultMethods, LoggerFunc } from 'signale';
@@ -34,10 +34,13 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   }
 
   public fetchAllVersion() {
+    const verIntoSet = insert(ordVersion);
     const releasedVersions = tryCatch(() => this.repository.tags(), String)
       .map(({ all }) => all)
       .map((tags) =>
-        tags.filter((x) => semver.valid(x)).reduce((xs, x) => xs.add(releasedVersionFromString(x)), new Set<Version>()),
+        tags
+          .filter((x) => semver.valid(x))
+          .reduce((xs, x) => verIntoSet(releasedVersionFromString(x), xs), new Set<Version>()),
       );
     const wipVersions = tryCatch(() => this.repository.branchLocal(), String)
       .map(({ all }) => all)
@@ -45,7 +48,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
         branches
           .map((x) => x.replace(/^release\//, ''))
           .filter((x) => semver.valid(x))
-          .reduce((xs, x) => xs.add(wipVersionFromString(x)), new Set<Version>()),
+          .reduce((xs, x) => verIntoSet(wipVersionFromString(x), xs), new Set<Version>()),
       );
     return releasedVersions.chain((x) => wipVersions.map((y) => union(ordVersion)(x, y)));
   }
