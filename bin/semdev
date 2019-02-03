@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const cli = require('cac')();
+const signale = require('signale');
 const { PrepareCommand } = require('../build/app/command/prepare');
 const { PrepareNextVersion } = require('../build/core/use-case/prepare-next-version');
 const { PrepareNextVersionAdapter } = require('../build/app/adapter/prepare-next-version-adapter');
@@ -16,7 +17,7 @@ const run = (command) => async (...args) =>
       process.exit(0);
     })
     .catch((err) => {
-      console.error(err);
+      signale.error(err);
       process.exit(1);
     });
 
@@ -32,7 +33,7 @@ cli
   .action(run(checkout.run.bind(checkout)));
 
 cli.on('command:*', () => {
-  console.error(`unknown sub command: ${cli.args.join(' ')}`);
+  signale.error(`unknown sub command: ${cli.args.join(' ')}`);
   process.exit(1);
 });
 
