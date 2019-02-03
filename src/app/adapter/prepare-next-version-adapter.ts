@@ -27,8 +27,8 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
     };
     const { versionPrefix } = this.config;
     this.notify = {
-      computedNext: tap((_) => this.signale.info(`detected latest version: ${_.toString(versionPrefix)}`)),
-      detectedLatest: tap((_) => this.signale.info(`compute next version: ${_.toString(versionPrefix)}`)),
+      detectedLatest: tap((_) => this.signale.info(`detected latest version: ${_.toString(versionPrefix)}`)),
+      computedNext: tap((_) => this.signale.info(`compute next version: ${_.toString(versionPrefix)}`)),
       createdBranch: tap((_) => this.signale.success(`create development branch: ${_}`)),
     };
   }
