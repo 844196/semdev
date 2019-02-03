@@ -5,12 +5,7 @@ import * as semver from 'semver';
 import { SimpleGit } from 'simple-git/promise';
 import { ordVersion, Version } from '../../core/model/version';
 import { PrepareNextVersionPort } from '../../core/use-case/prepare-next-version';
-
-interface Config {
-  versionPrefix: string;
-  branchPrefix: string;
-  mainStreamBranch: string;
-}
+import { Config } from '../config';
 
 const releasedVersionFromString = (x: string) =>
   Version.released(semver.major(x), semver.minor(x), semver.patch(x), (semver.prerelease(x) || []).join('.'));

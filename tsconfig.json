@@ -9,6 +9,11 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "removeComments": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./build/"
+  },
+  "exclude": ["**/*.spec.ts"]
 }

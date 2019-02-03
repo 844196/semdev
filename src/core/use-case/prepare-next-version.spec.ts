@@ -38,7 +38,7 @@ describe('PrepareNextVersion', () => {
       port.existsDevelopmentBranch.mockReturnValue(fromEither(right(none)));
       port.createDevelopmentBranch.mockReturnValue(fromEither(right(undefined)));
 
-      const rtn = await useCase.byReleaseType(releaseType);
+      const rtn = await useCase.byReleaseType(releaseType).run();
       expect(rtn.value).toEqual(Version.wip(1, 2, 2));
       expect(port.fetchAllVersion).toHaveBeenCalled();
       expect(port.existsDevelopmentBranch).toHaveBeenCalledWith(Version.wip(1, 2, 2));
@@ -50,7 +50,7 @@ describe('PrepareNextVersion', () => {
       port.existsDevelopmentBranch.mockReturnValue(fromEither(right(none)));
       port.createDevelopmentBranch.mockReturnValue(fromEither(right(undefined)));
 
-      const rtn = await useCase.byReleaseType(ReleaseType.minor);
+      const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
       expect(rtn.value).toEqual(Version.wip(0, 1, 0));
       expect(port.fetchAllVersion).toHaveBeenCalled();
       expect(port.existsDevelopmentBranch).toHaveBeenCalledWith(Version.wip(0, 1, 0));
@@ -61,14 +61,15 @@ describe('PrepareNextVersion', () => {
       port.fetchAllVersion.mockReturnValue(fromEither(right(new Set([Version.released(1, 2, 3)]))));
       port.existsDevelopmentBranch.mockReturnValue(fromEither(right(some('release/v1.3.0'))));
 
-      const rtn = await useCase.byReleaseType(ReleaseType.minor);
+      const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
       expect(rtn.value).toEqual('branch already exists: release/v1.3.0');
       expect(port.createDevelopmentBranch).toHaveBeenCalledTimes(0);
     });
 
     it('some error happen', async () => {
       port.fetchAllVersion.mockReturnValue(fromEither(left('command not found: git')));
-      const rtn = await useCase.byReleaseType(ReleaseType.minor);
+
+      const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
       expect(rtn.value).toEqual('command not found: git');
       expect(port.existsDevelopmentBranch).toHaveBeenCalledTimes(0);
       expect(port.createDevelopmentBranch).toHaveBeenCalledTimes(0);

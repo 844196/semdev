@@ -1,0 +1,42 @@
+#!/usr/bin/env node
+
+const cli = require('cac')();
+const { PrepareCommand } = require('../build/app/command/prepare');
+const { PrepareNextVersion } = require('../build/core/use-case/prepare-next-version');
+const { PrepareNextVersionAdapter } = require('../build/app/adapter/prepare-next-version-adapter');
+const simpleGit = require('simple-git/promise');
+
+const run = (command) => async (...args) =>
+  command(...args)
+    .run()
+    .then((result) => {
+      if (result.isLeft()) {
+        return Promise.reject(result.value);
+      }
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+
+const config = {
+  versionPrefix: 'v',
+  branchPrefix: 'release/',
+  mainStreamBranch: 'master',
+};
+
+const checkout = new PrepareCommand(new PrepareNextVersion(new PrepareNextVersionAdapter(config, simpleGit())));
+cli
+  .command('prepare <major|minor|patch>', 'Prepare for next version development')
+  .action(run(checkout.run.bind(checkout)));
+
+cli.on('command:*', () => {
+  console.error(`unknown sub command: ${cli.args.join(' ')}`);
+  process.exit(1);
+});
+
+cli
+  .version('0.0.0')
+  .help()
+  .parse();

@@ -504,6 +504,11 @@ builtin-modules@^1.0.0, builtin-modules@^1.1.1:
   resolved "https://registry.yarnpkg.com/builtin-modules/-/builtin-modules-1.1.1.tgz#270f076c5a72c02f5b65a47df94c5fe3a278892f"
   integrity sha1-Jw8HbFpywC9bZaR9+Uxf46J4iS8=
 
+cac@^6.4.2:
+  version "6.4.2"
+  resolved "https://registry.yarnpkg.com/cac/-/cac-6.4.2.tgz#6b2a2ab12619b778b3acc19f97e5298761d9c3de"
+  integrity sha512-HM7kl/Izk6pb2HD7z66LVNU52j0xWpBXg8J2MLnOdRMUo2wsrcxu3yRnubnDe/cT0btDzSOl3FPhze09uaT1Vw==
+
 cache-base@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/cache-base/-/cache-base-1.0.1.tgz#0a7f46416831c8b662ee36fe4e7c59d76f666ab2"

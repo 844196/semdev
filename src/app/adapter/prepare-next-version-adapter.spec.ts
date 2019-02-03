@@ -1,8 +1,14 @@
 import { none, some } from 'fp-ts/lib/Option';
 import { SimpleGit } from 'simple-git/promise';
 import { Version } from '../../core/model/version';
+import { Config } from '../config';
 import { PrepareNextVersionAdapter } from './prepare-next-version-adapter';
 
+const config: Config = {
+  versionPrefix: 'v',
+  branchPrefix: 'release/',
+  mainStreamBranch: 'master',
+};
 let simpleGit: jest.Mocked<SimpleGit>;
 let adapter: PrepareNextVersionAdapter;
 
@@ -16,10 +22,7 @@ beforeEach(() => {
       };
     },
   )();
-  adapter = new PrepareNextVersionAdapter(
-    { versionPrefix: 'v', branchPrefix: 'release/', mainStreamBranch: 'master' },
-    simpleGit,
-  );
+  adapter = new PrepareNextVersionAdapter(config, simpleGit);
 });
 
 describe('PrepareNextVersionAdapter', () => {
