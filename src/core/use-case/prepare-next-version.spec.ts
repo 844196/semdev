@@ -15,6 +15,11 @@ beforeEach(() => {
         fetchAllVersion: jest.fn(),
         existsDevelopmentBranch: jest.fn(),
         createDevelopmentBranch: jest.fn(),
+        notify: {
+          detectedLatest: jest.fn((a) => fromEither(right(a))),
+          computedNext: jest.fn((a) => fromEither(right(a))),
+          createdBranch: jest.fn((a) => fromEither(right(a))),
+        },
       };
     },
   )();
@@ -36,10 +41,10 @@ describe('PrepareNextVersion', () => {
 
       port.fetchAllVersion.mockReturnValue(fromEither(right(new Set(versions))));
       port.existsDevelopmentBranch.mockReturnValue(fromEither(right(none)));
-      port.createDevelopmentBranch.mockReturnValue(fromEither(right(undefined)));
+      port.createDevelopmentBranch.mockReturnValue(fromEither(right('release/v1.2.2')));
 
       const rtn = await useCase.byReleaseType(releaseType).run();
-      expect(rtn.value).toEqual(Version.wip(1, 2, 2));
+      expect(rtn.isRight()).toBeTruthy();
       expect(port.fetchAllVersion).toHaveBeenCalled();
       expect(port.existsDevelopmentBranch).toHaveBeenCalledWith(Version.wip(1, 2, 2));
       expect(port.createDevelopmentBranch).toHaveBeenCalledWith(Version.wip(1, 2, 2));
@@ -48,10 +53,10 @@ describe('PrepareNextVersion', () => {
     it('success2', async () => {
       port.fetchAllVersion.mockReturnValue(fromEither(right(new Set())));
       port.existsDevelopmentBranch.mockReturnValue(fromEither(right(none)));
-      port.createDevelopmentBranch.mockReturnValue(fromEither(right(undefined)));
+      port.createDevelopmentBranch.mockReturnValue(fromEither(right('release/v0.1.0')));
 
       const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
-      expect(rtn.value).toEqual(Version.wip(0, 1, 0));
+      expect(rtn.isRight()).toBeTruthy();
       expect(port.fetchAllVersion).toHaveBeenCalled();
       expect(port.existsDevelopmentBranch).toHaveBeenCalledWith(Version.wip(0, 1, 0));
       expect(port.createDevelopmentBranch).toHaveBeenCalledWith(Version.wip(0, 1, 0));
@@ -63,7 +68,6 @@ describe('PrepareNextVersion', () => {
 
       const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
       expect(rtn.value).toEqual('branch already exists: release/v1.3.0');
-      expect(port.createDevelopmentBranch).toHaveBeenCalledTimes(0);
     });
 
     it('some error happen', async () => {
@@ -71,8 +75,6 @@ describe('PrepareNextVersion', () => {
 
       const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
       expect(rtn.value).toEqual('command not found: git');
-      expect(port.existsDevelopmentBranch).toHaveBeenCalledTimes(0);
-      expect(port.createDevelopmentBranch).toHaveBeenCalledTimes(0);
     });
   });
 });

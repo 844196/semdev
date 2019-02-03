@@ -1,4 +1,5 @@
 import { none, some } from 'fp-ts/lib/Option';
+import { DefaultMethods, LoggerFunc } from 'signale';
 import { SimpleGit } from 'simple-git/promise';
 import { Version } from '../../core/model/version';
 import { Config } from '../config';
@@ -11,6 +12,7 @@ const config: Config = {
 };
 let simpleGit: jest.Mocked<SimpleGit>;
 let adapter: PrepareNextVersionAdapter;
+let signale: jest.Mocked<Record<Extract<DefaultMethods, 'success' | 'info'>, LoggerFunc>>;
 
 beforeEach(() => {
   simpleGit = jest.fn(
@@ -22,7 +24,8 @@ beforeEach(() => {
       };
     },
   )();
-  adapter = new PrepareNextVersionAdapter(config, simpleGit);
+  signale = jest.fn(() => ({ success: jest.fn(() => undefined), info: jest.fn(() => undefined) }))();
+  adapter = new PrepareNextVersionAdapter(config, simpleGit, signale);
 });
 
 describe('PrepareNextVersionAdapter', () => {
@@ -55,7 +58,8 @@ describe('PrepareNextVersionAdapter', () => {
 
   it('createDevelopmentBranch()', async () => {
     simpleGit.checkoutBranch.mockResolvedValue(undefined);
-    await adapter.createDevelopmentBranch(Version.wip(1, 1, 0)).run();
+    const rtn = await adapter.createDevelopmentBranch(Version.wip(1, 1, 0)).run();
+    expect(rtn.value).toBe('release/v1.1.0');
     expect(simpleGit.checkoutBranch).toHaveBeenCalledWith('release/v1.1.0', 'master');
   });
 });
