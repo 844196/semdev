@@ -1,4 +1,4 @@
-import { findLast } from 'fp-ts/lib/array';
+import { findLast } from 'fp-ts/lib/Array';
 import { toArray } from 'fp-ts/lib/Set';
 import { TaskEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseType } from '../model/release-type';
