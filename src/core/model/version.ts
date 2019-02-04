@@ -19,8 +19,27 @@ export class Version {
     return new Version(major, minor, patch, preRelease, true);
   }
 
+  public static releasedFromString(str: string) {
+    if (!semver.valid(str)) {
+      throw new InvalidVersionStringError(`given: ${str}`);
+    }
+    return Version.released(
+      semver.major(str),
+      semver.minor(str),
+      semver.patch(str),
+      (semver.prerelease(str) || []).join('.'),
+    );
+  }
+
   public static wip(major: number, minor: number, patch: number) {
     return new Version(major, minor, patch, '', false);
+  }
+
+  public static wipFromString(str: string) {
+    if (!semver.valid(str)) {
+      throw new InvalidVersionStringError(`given: ${str}`);
+    }
+    return Version.wip(semver.major(str), semver.minor(str), semver.patch(str));
   }
 
   public get wip() {
@@ -38,6 +57,17 @@ export class Version {
     }
   }
 
+  public equals(other: Version) {
+    if (this.released !== other.released) {
+      return false;
+    }
+    return semver.eq(this.toString(), other.toString());
+  }
+
+  public greaterThan(other: Version) {
+    return semver.gt(this.toString(), other.toString());
+  }
+
   public toString(prefix: string = '') {
     return `${prefix}${this.major}.${this.minor}.${this.patch}${
       this.preRelease.length > 0 ? `-${this.preRelease}` : ''
@@ -45,12 +75,9 @@ export class Version {
   }
 }
 
+export class InvalidVersionStringError extends Error {}
+
 export const ordVersion: Ord<Version> = {
-  equals: (x, y) => semver.eq(x.toString(), y.toString()),
-  compare: (x, y) => {
-    if (semver.eq(x.toString(), y.toString())) {
-      return 0;
-    }
-    return semver.gt(x.toString(), y.toString()) ? 1 : -1;
-  },
+  equals: (x, y) => x.equals(y),
+  compare: (x, y) => (x.equals(y) ? 0 : x.greaterThan(y) ? 1 : -1),
 };

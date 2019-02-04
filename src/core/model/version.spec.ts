@@ -1,5 +1,5 @@
 import { ReleaseType } from './release-type';
-import { ordVersion, Version } from './version';
+import { InvalidVersionStringError, ordVersion, Version } from './version';
 
 describe('Version', () => {
   it('initial()', () => {
@@ -31,6 +31,19 @@ describe('Version', () => {
     });
   });
 
+  describe('releasedFromString()', () => {
+    it('not pre', () => {
+      expect(Version.releasedFromString('1.2.3')).toEqual(Version.released(1, 2, 3));
+      expect(Version.releasedFromString('v1.2.3')).toEqual(Version.released(1, 2, 3));
+      expect(() => Version.releasedFromString('foo')).toThrow(new InvalidVersionStringError('given: foo'));
+    });
+
+    it('pre', () => {
+      expect(Version.releasedFromString('1.2.3-alpha.1')).toEqual(Version.released(1, 2, 3, 'alpha.1'));
+      expect(Version.releasedFromString('v1.2.3-alpha.1')).toEqual(Version.released(1, 2, 3, 'alpha.1'));
+    });
+  });
+
   it('wip()', () => {
     const v124Wip = Version.wip(1, 2, 4);
     expect(v124Wip.major).toBe(1);
@@ -38,6 +51,12 @@ describe('Version', () => {
     expect(v124Wip.patch).toBe(4);
     expect(v124Wip.preRelease).toBe('');
     expect(v124Wip.wip).toBe(true);
+  });
+
+  it('wipFromString()', () => {
+    expect(Version.wipFromString('1.2.3')).toEqual(Version.wip(1, 2, 3));
+    expect(Version.wipFromString('v1.2.3')).toEqual(Version.wip(1, 2, 3));
+    expect(() => Version.wipFromString('foo')).toThrow(new InvalidVersionStringError('given: foo'));
   });
 
   describe('increment()', () => {

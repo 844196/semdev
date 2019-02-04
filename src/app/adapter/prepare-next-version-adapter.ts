@@ -9,10 +9,6 @@ import { ordVersion, Version } from '../../core/model/version';
 import { PrepareNextVersionPort } from '../../core/use-case/prepare-next-version';
 import { Config } from '../config';
 
-const releasedVersionFromString = (x: string) =>
-  Version.released(semver.major(x), semver.minor(x), semver.patch(x), (semver.prerelease(x) || []).join('.'));
-const wipVersionFromString = (x: string) => Version.wip(semver.major(x), semver.minor(x), semver.patch(x));
-
 export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   public readonly notify: PrepareNextVersionPort['notify'];
 
@@ -40,7 +36,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
       .map((tags) =>
         tags
           .filter((x) => semver.valid(x))
-          .reduce((xs, x) => verIntoSet(releasedVersionFromString(x), xs), new Set<Version>()),
+          .reduce((xs, x) => verIntoSet(Version.releasedFromString(x), xs), new Set<Version>()),
       );
     const wipVersions = tryCatch(() => this.repository.branchLocal(), String)
       .map(({ all }) => all)
@@ -48,7 +44,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
         branches
           .map((x) => x.replace(/^release\//, ''))
           .filter((x) => semver.valid(x))
-          .reduce((xs, x) => verIntoSet(wipVersionFromString(x), xs), new Set<Version>()),
+          .reduce((xs, x) => verIntoSet(Version.wipFromString(x), xs), new Set<Version>()),
       );
     return releasedVersions.chain((x) => wipVersions.map((y) => union(ordVersion)(x, y)));
   }
