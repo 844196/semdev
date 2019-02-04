@@ -24,6 +24,7 @@ export class Version {
   }
 
   public static releasedFromString(str: string) {
+    // TODO: return Either<string, Version>
     if (!Version.validString(str)) {
       throw new InvalidVersionStringError(`given: ${str}`);
     }
@@ -40,6 +41,7 @@ export class Version {
   }
 
   public static wipFromString(str: string) {
+    // TODO: return Either<string, Version>
     if (!Version.validString(str)) {
       throw new InvalidVersionStringError(`given: ${str}`);
     }
