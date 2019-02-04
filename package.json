@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc --project .",
-    "ci": "npm-run-all ci:*",
+    "ci": "npm-run-all --parallel ci:*",
     "ci:type": "tsc --project . --noEmit",
     "ci:lint": "tslint --project . --format stylish",
     "ci:test": "jest --verbose"
