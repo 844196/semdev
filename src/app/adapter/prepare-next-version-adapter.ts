@@ -1,7 +1,6 @@
 import { right } from 'fp-ts/lib/Either';
 import { insert, union } from 'fp-ts/lib/Set';
 import { fromEither, tryCatch } from 'fp-ts/lib/TaskEither';
-import * as semver from 'semver';
 import { DefaultMethods, LoggerFunc } from 'signale';
 import { SimpleGit } from 'simple-git/promise';
 import { ordVersion, Version } from '../../core/model/version';
@@ -34,7 +33,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
       .map(({ all }) => all)
       .map((tags) =>
         tags
-          .filter((x) => semver.valid(x) !== null)
+          .filter(Version.validString)
           .reduce((xs, x) => verIntoSet(Version.releasedFromString(x), xs), new Set<Version>()),
       );
     const wipVersions = tryCatch(() => this.repository.branchLocal(), String)
@@ -42,7 +41,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
       .map((branches) =>
         branches
           .map((x) => x.replace(new RegExp(String.raw`^${this.config.branchPrefix}`), ''))
-          .filter((x) => semver.valid(x) !== null)
+          .filter(Version.validString)
           .reduce((xs, x) => verIntoSet(Version.wipFromString(x), xs), new Set<Version>()),
       );
     return releasedVersions.chain((x) => wipVersions.map((y) => union(ordVersion)(x, y)));

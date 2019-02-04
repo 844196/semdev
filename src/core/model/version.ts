@@ -11,6 +11,10 @@ export class Version {
     public readonly released: boolean,
   ) {}
 
+  public static validString(str: string) {
+    return semver.valid(str) !== null;
+  }
+
   public static initial() {
     return new Version(0, 0, 0, '', false);
   }
@@ -20,7 +24,7 @@ export class Version {
   }
 
   public static releasedFromString(str: string) {
-    if (!semver.valid(str)) {
+    if (!Version.validString(str)) {
       throw new InvalidVersionStringError(`given: ${str}`);
     }
     return Version.released(
@@ -36,7 +40,7 @@ export class Version {
   }
 
   public static wipFromString(str: string) {
-    if (!semver.valid(str)) {
+    if (!Version.validString(str)) {
       throw new InvalidVersionStringError(`given: ${str}`);
     }
     return Version.wip(semver.major(str), semver.minor(str), semver.patch(str));
