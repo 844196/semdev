@@ -34,7 +34,7 @@ cli
   .action((releaseType, { verbose }) => {
     const useCaseAdapter = new PrepareNextVersionAdapter(
       config,
-      simpleGit(),
+      simpleGit().silent(true),
       verbose ? signale : { info: () => undefined, success: signale.success },
     );
     const useCase = new PrepareNextVersion(useCaseAdapter);

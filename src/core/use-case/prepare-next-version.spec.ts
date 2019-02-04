@@ -1,8 +1,8 @@
 import { left, right } from 'fp-ts/lib/Either';
-import { none, some } from 'fp-ts/lib/Option';
 import { fromEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseType } from '../model/release-type';
 import { Version } from '../model/version';
+import { VersionDevelopmentBranch } from '../model/version-development-branch';
 import { PrepareNextVersion, PrepareNextVersionPort } from './prepare-next-version';
 
 let port: jest.Mocked<PrepareNextVersionPort>;
@@ -13,8 +13,7 @@ beforeEach(() => {
     (): PrepareNextVersionPort => {
       return {
         fetchAllVersion: jest.fn(),
-        existsDevelopmentBranch: jest.fn(),
-        createDevelopmentBranch: jest.fn(),
+        checkoutBranch: jest.fn(),
         notify: {
           detectedLatest: jest.fn((a) => fromEither(right(a))),
           computedNext: jest.fn((a) => fromEither(right(a))),
@@ -40,34 +39,22 @@ describe('PrepareNextVersion', () => {
       const releaseType = ReleaseType.patch;
 
       port.fetchAllVersion.mockReturnValue(fromEither(right(new Set(versions))));
-      port.existsDevelopmentBranch.mockReturnValue(fromEither(right(none)));
-      port.createDevelopmentBranch.mockReturnValue(fromEither(right('release/v1.2.2')));
+      port.checkoutBranch.mockReturnValue(fromEither(right(VersionDevelopmentBranch.of(Version.wip(1, 2, 2)))));
 
       const rtn = await useCase.byReleaseType(releaseType).run();
       expect(rtn.isRight()).toBeTruthy();
       expect(port.fetchAllVersion).toHaveBeenCalled();
-      expect(port.existsDevelopmentBranch).toHaveBeenCalledWith(Version.wip(1, 2, 2));
-      expect(port.createDevelopmentBranch).toHaveBeenCalledWith(Version.wip(1, 2, 2));
+      expect(port.checkoutBranch).toHaveBeenCalledWith(VersionDevelopmentBranch.of(Version.wip(1, 2, 2)));
     });
 
     it('success2', async () => {
       port.fetchAllVersion.mockReturnValue(fromEither(right(new Set())));
-      port.existsDevelopmentBranch.mockReturnValue(fromEither(right(none)));
-      port.createDevelopmentBranch.mockReturnValue(fromEither(right('release/v0.1.0')));
+      port.checkoutBranch.mockReturnValue(fromEither(right(VersionDevelopmentBranch.of(Version.wip(0, 1, 0)))));
 
       const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
       expect(rtn.isRight()).toBeTruthy();
       expect(port.fetchAllVersion).toHaveBeenCalled();
-      expect(port.existsDevelopmentBranch).toHaveBeenCalledWith(Version.wip(0, 1, 0));
-      expect(port.createDevelopmentBranch).toHaveBeenCalledWith(Version.wip(0, 1, 0));
-    });
-
-    it('branch already exists', async () => {
-      port.fetchAllVersion.mockReturnValue(fromEither(right(new Set([Version.released(1, 2, 3)]))));
-      port.existsDevelopmentBranch.mockReturnValue(fromEither(right(some('release/v1.3.0'))));
-
-      const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
-      expect(rtn.value).toEqual('branch already exists: release/v1.3.0');
+      expect(port.checkoutBranch).toHaveBeenCalledWith(VersionDevelopmentBranch.of(Version.wip(0, 1, 0)));
     });
 
     it('some error happen', async () => {

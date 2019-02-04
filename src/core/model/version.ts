@@ -68,8 +68,8 @@ export class Version {
     return semver.gt(this.toString(), other.toString());
   }
 
-  public toString(prefix: string = '') {
-    return `${prefix}${this.major}.${this.minor}.${this.patch}${
+  public toString({ versionPrefix }: { versionPrefix: string } = { versionPrefix: '' }) {
+    return `${versionPrefix}${this.major}.${this.minor}.${this.patch}${
       this.preRelease.length > 0 ? `-${this.preRelease}` : ''
     }`;
   }

@@ -85,11 +85,11 @@ describe('Version', () => {
 
   describe('toString()', () => {
     it('not pre', () => {
-      expect(Version.released(1, 2, 3).toString('v')).toBe('v1.2.3');
+      expect(Version.released(1, 2, 3).toString({ versionPrefix: 'v' })).toBe('v1.2.3');
     });
 
     it('pre', () => {
-      expect(Version.released(1, 2, 3, 'alpha.1').toString('v')).toBe('v1.2.3-alpha.1');
+      expect(Version.released(1, 2, 3, 'alpha.1').toString({ versionPrefix: 'v' })).toBe('v1.2.3-alpha.1');
     });
   });
 });

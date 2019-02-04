@@ -1,7 +1,7 @@
-import { none, some } from 'fp-ts/lib/Option';
 import { DefaultMethods, LoggerFunc } from 'signale';
 import { SimpleGit } from 'simple-git/promise';
 import { Version } from '../../core/model/version';
+import { VersionDevelopmentBranch } from '../../core/model/version-development-branch';
 import { Config } from '../config';
 import { PrepareNextVersionAdapter } from './prepare-next-version-adapter';
 
@@ -30,7 +30,9 @@ beforeEach(() => {
 
 describe('PrepareNextVersionAdapter', () => {
   it('fetchAllVersion()', async () => {
-    simpleGit.branchLocal.mockResolvedValue({ all: ['master', 'release/v1.1.0', 'release/v2.0.0'] });
+    simpleGit.branchLocal.mockResolvedValue({
+      all: ['master', 'release/v1.1.0', 'release/v2.0.0', 'release/v2.0.0/feature/design-renewal'],
+    });
     simpleGit.tags.mockResolvedValue({ all: ['v1.0.0', 'v1.0.1-alpha.1', 'v1.0.1'] });
 
     const rtn = await adapter.fetchAllVersion().run();
@@ -47,19 +49,11 @@ describe('PrepareNextVersionAdapter', () => {
     expect(simpleGit.tags).toHaveBeenCalled();
   });
 
-  it('existsDevelopmentBranch()', async () => {
-    simpleGit.branchLocal.mockResolvedValue({ all: ['master', 'release/v1.1.0', 'release/v2.0.0'] });
-
-    const rtn1 = await adapter.existsDevelopmentBranch(Version.wip(1, 1, 0)).run();
-    expect(rtn1.value).toEqual(some('release/v1.1.0'));
-    const rtn2 = await adapter.existsDevelopmentBranch(Version.wip(1, 0, 2)).run();
-    expect(rtn2.value).toEqual(none);
-  });
-
-  it('createDevelopmentBranch()', async () => {
+  it('checkoutBranch()', async () => {
     simpleGit.checkoutBranch.mockResolvedValue(undefined);
-    const rtn = await adapter.createDevelopmentBranch(Version.wip(1, 1, 0)).run();
-    expect(rtn.value).toBe('release/v1.1.0');
+
+    const rtn = await adapter.checkoutBranch(VersionDevelopmentBranch.of(Version.wip(1, 1, 0))).run();
+    expect(rtn.value).toEqual(VersionDevelopmentBranch.of(Version.wip(1, 1, 0)));
     expect(simpleGit.checkoutBranch).toHaveBeenCalledWith('release/v1.1.0', 'master');
   });
 });
