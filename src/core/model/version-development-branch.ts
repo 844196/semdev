@@ -2,7 +2,7 @@ import { Either, left, right } from 'fp-ts/lib/Either';
 import { Version } from './version';
 
 export class VersionDevelopmentBranch {
-  private constructor(private readonly version: Version) {}
+  private constructor(public readonly version: Version) {}
 
   public static of(version: Version): Either<string, VersionDevelopmentBranch> {
     return version.wip

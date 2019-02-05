@@ -6,6 +6,9 @@ const { PrepareCommand } = require('../build/app/command/prepare');
 const { PrepareNextVersion } = require('../build/core/use-case/prepare-next-version');
 const { PrepareNextVersionAdapter } = require('../build/app/adapter/prepare-next-version-adapter');
 const simpleGit = require('simple-git/promise');
+const { ReleaseCommand } = require('../build/app/command/release');
+const { ReleaseVersion } = require('../build/core/use-case/release-version');
+const { ReleaseVersionAdapter } = require('../build/app/adapter/release-version-adapter');
 
 const run = (cmd) => async (...args) =>
   cmd
@@ -41,6 +44,19 @@ cli
     );
     const useCase = new PrepareNextVersion(useCaseAdapter);
     run(new PrepareCommand(useCase))(releaseTypeOrVersion);
+  });
+
+cli
+  .command('release <version>', 'Merge version development branch & create tag')
+  .example((me) => `${me} merge v1.2.3`)
+  .action((version) => {
+    const useCaseAdapter = new ReleaseVersionAdapter(
+      config,
+      simpleGit().silent(true),
+      { success: signale.success },
+    );
+    const useCase = new ReleaseVersion(useCaseAdapter);
+    run(new ReleaseCommand(useCase))(version);
   });
 
 cli.on('command:*', () => {
