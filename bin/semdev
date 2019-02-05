@@ -29,16 +29,18 @@ const config = {
 };
 
 cli
-  .command('prepare <major|minor|patch>', 'Prepare for next version development')
+  .command('prepare <major|minor|patch|new-version>', 'Prepare for next version development')
   .option('--verbose', 'Print progress messages', { default: false })
-  .action((releaseType, { verbose }) => {
+  .example((me) => `${me} prepare major`)
+  .example((me) => `${me} prepare v1.2.3`)
+  .action((releaseTypeOrVersion, { verbose }) => {
     const useCaseAdapter = new PrepareNextVersionAdapter(
       config,
       simpleGit().silent(true),
       verbose ? signale : { info: () => undefined, success: signale.success },
     );
     const useCase = new PrepareNextVersion(useCaseAdapter);
-    run(new PrepareCommand(useCase))(releaseType);
+    run(new PrepareCommand(useCase))(releaseTypeOrVersion);
   });
 
 cli.on('command:*', () => {

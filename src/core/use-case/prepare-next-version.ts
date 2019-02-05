@@ -39,4 +39,10 @@ export class PrepareNextVersion {
 
     return checkoutBranch;
   }
+
+  public byVersion(version: Version) {
+    return fromEither(VersionDevelopmentBranch.of(version))
+      .chain(this.port.checkoutBranch.bind(this.port))
+      .chain(this.port.notify.createdBranch.bind(this.port));
+  }
 }
