@@ -1,14 +1,14 @@
 import { fromEither, TaskEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { Version } from '../model/version';
+import { NotifiablePort } from './notifiable-port';
 
-export interface NotificationType {
+interface NotificationType {
   merged: ReleaseBranch;
   tagged: Version;
 }
 
-export interface ReleaseVersionPort {
-  notify: { [K in keyof NotificationType]: (present: NotificationType[K]) => TaskEither<string, NotificationType[K]> };
+export interface ReleaseVersionPort extends NotifiablePort<NotificationType> {
   mergeBranch(branch: ReleaseBranch): TaskEither<string, ReleaseBranch>;
   createTag(version: Version): TaskEither<string, Version>;
 }

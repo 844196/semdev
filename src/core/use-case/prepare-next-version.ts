@@ -4,15 +4,15 @@ import { fromEither, TaskEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
 import { ordVersion, Version } from '../model/version';
+import { NotifiablePort } from './notifiable-port';
 
-export interface NotificationType {
+interface NotificationType {
   detectedLatest: Version;
   computedNext: Version;
   createdBranch: ReleaseBranch;
 }
 
-export interface PrepareNextVersionPort {
-  notify: { [K in keyof NotificationType]: (present: NotificationType[K]) => TaskEither<string, NotificationType[K]> };
+export interface PrepareNextVersionPort extends NotifiablePort<NotificationType> {
   fetchAllVersion(): TaskEither<string, Set<Version>>;
   checkoutBranch(branch: ReleaseBranch): TaskEither<string, ReleaseBranch>;
 }
