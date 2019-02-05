@@ -1,20 +1,20 @@
 import { findLast } from 'fp-ts/lib/Array';
 import { toArray } from 'fp-ts/lib/Set';
 import { fromEither, TaskEither } from 'fp-ts/lib/TaskEither';
+import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
 import { ordVersion, Version } from '../model/version';
-import { VersionDevelopmentBranch } from '../model/version-development-branch';
 
 export interface NotificationType {
   detectedLatest: Version;
   computedNext: Version;
-  createdBranch: VersionDevelopmentBranch;
+  createdBranch: ReleaseBranch;
 }
 
 export interface PrepareNextVersionPort {
   notify: { [K in keyof NotificationType]: (present: NotificationType[K]) => TaskEither<string, NotificationType[K]> };
   fetchAllVersion(): TaskEither<string, Set<Version>>;
-  checkoutBranch(branch: VersionDevelopmentBranch): TaskEither<string, VersionDevelopmentBranch>;
+  checkoutBranch(branch: ReleaseBranch): TaskEither<string, ReleaseBranch>;
 }
 
 export class PrepareNextVersion {
@@ -32,7 +32,7 @@ export class PrepareNextVersion {
       .chain(this.port.notify.computedNext.bind(this.port));
 
     const checkoutBranch = computeNextVersion
-      .map(VersionDevelopmentBranch.of)
+      .map(ReleaseBranch.of)
       .chain(fromEither)
       .chain(this.port.checkoutBranch.bind(this.port))
       .chain(this.port.notify.createdBranch.bind(this.port));
@@ -41,7 +41,7 @@ export class PrepareNextVersion {
   }
 
   public byVersion(version: Version) {
-    return fromEither(VersionDevelopmentBranch.of(version))
+    return fromEither(ReleaseBranch.of(version))
       .chain(this.port.checkoutBranch.bind(this.port))
       .chain(this.port.notify.createdBranch.bind(this.port));
   }

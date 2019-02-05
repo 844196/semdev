@@ -3,8 +3,8 @@ import { insert, union } from 'fp-ts/lib/Set';
 import { fromEither, tryCatch } from 'fp-ts/lib/TaskEither';
 import { DefaultMethods, LoggerFunc } from 'signale';
 import { SimpleGit } from 'simple-git/promise';
+import { ReleaseBranch } from '../../core/model/release-branch';
 import { ordVersion, Version } from '../../core/model/version';
-import { VersionDevelopmentBranch } from '../../core/model/version-development-branch';
 import { PrepareNextVersionPort } from '../../core/use-case/prepare-next-version';
 import { Config } from '../config';
 
@@ -48,7 +48,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
     return releasedVersions.chain((x) => wipVersions.map((y) => union(ordVersion)(x, y)));
   }
 
-  public checkoutBranch(branch: VersionDevelopmentBranch) {
+  public checkoutBranch(branch: ReleaseBranch) {
     return tryCatch(
       () => this.repository.checkoutBranch(branch.toString(this.config), this.config.masterBranch),
       String,

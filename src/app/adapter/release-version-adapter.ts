@@ -2,8 +2,8 @@ import { right } from 'fp-ts/lib/Either';
 import { fromEither, tryCatch } from 'fp-ts/lib/TaskEither';
 import { DefaultMethods, LoggerFunc } from 'signale';
 import { SimpleGit } from 'simple-git/promise';
+import { ReleaseBranch } from '../../core/model/release-branch';
 import { Version } from '../../core/model/version';
-import { VersionDevelopmentBranch } from '../../core/model/version-development-branch';
 import { ReleaseVersionPort } from '../../core/use-case/release-version';
 import { Config } from '../config';
 
@@ -25,7 +25,7 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
     };
   }
 
-  public mergeBranch(branch: VersionDevelopmentBranch) {
+  public mergeBranch(branch: ReleaseBranch) {
     const { branchPrefix, versionPrefix, masterBranch } = this.config;
     const from = branch.toString({ branchPrefix, versionPrefix });
     const to = masterBranch;

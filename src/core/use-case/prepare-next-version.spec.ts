@@ -1,8 +1,8 @@
 import { left, right } from 'fp-ts/lib/Either';
 import { fromEither } from 'fp-ts/lib/TaskEither';
+import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
 import { Version } from '../model/version';
-import { VersionDevelopmentBranch } from '../model/version-development-branch';
 import { PrepareNextVersion, PrepareNextVersionPort } from './prepare-next-version';
 
 let port: jest.Mocked<PrepareNextVersionPort>;
@@ -39,24 +39,22 @@ describe('PrepareNextVersion', () => {
       const releaseType = ReleaseType.patch;
 
       port.fetchAllVersion.mockReturnValue(fromEither(right(new Set(versions))));
-      port.checkoutBranch.mockReturnValue(fromEither(right(VersionDevelopmentBranch.of(Version.wip(1, 2, 2)))));
+      port.checkoutBranch.mockReturnValue(fromEither(right(ReleaseBranch.of(Version.wip(1, 2, 2)))));
 
       const rtn = await useCase.byReleaseType(releaseType).run();
       expect(rtn.isRight()).toBeTruthy();
       expect(port.fetchAllVersion).toHaveBeenCalled();
-      expect(port.checkoutBranch).toHaveBeenCalledWith(VersionDevelopmentBranch.of(Version.wip(1, 2, 2))
-        .value as VersionDevelopmentBranch);
+      expect(port.checkoutBranch).toHaveBeenCalledWith(ReleaseBranch.of(Version.wip(1, 2, 2)).value as ReleaseBranch);
     });
 
     it('success2', async () => {
       port.fetchAllVersion.mockReturnValue(fromEither(right(new Set())));
-      port.checkoutBranch.mockReturnValue(fromEither(right(VersionDevelopmentBranch.of(Version.wip(0, 1, 0)))));
+      port.checkoutBranch.mockReturnValue(fromEither(right(ReleaseBranch.of(Version.wip(0, 1, 0)))));
 
       const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
       expect(rtn.isRight()).toBeTruthy();
       expect(port.fetchAllVersion).toHaveBeenCalled();
-      expect(port.checkoutBranch).toHaveBeenCalledWith(VersionDevelopmentBranch.of(Version.wip(0, 1, 0))
-        .value as VersionDevelopmentBranch);
+      expect(port.checkoutBranch).toHaveBeenCalledWith(ReleaseBranch.of(Version.wip(0, 1, 0)).value as ReleaseBranch);
     });
 
     it('some error happen', async () => {

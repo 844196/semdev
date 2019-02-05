@@ -1,7 +1,7 @@
 import { DefaultMethods, LoggerFunc } from 'signale';
 import { SimpleGit } from 'simple-git/promise';
+import { ReleaseBranch } from '../../core/model/release-branch';
 import { Version } from '../../core/model/version';
-import { VersionDevelopmentBranch } from '../../core/model/version-development-branch';
 import { Config } from '../config';
 import { PrepareNextVersionAdapter } from './prepare-next-version-adapter';
 
@@ -52,10 +52,8 @@ describe('PrepareNextVersionAdapter', () => {
   it('checkoutBranch()', async () => {
     simpleGit.checkoutBranch.mockResolvedValue(undefined);
 
-    const rtn = await adapter
-      .checkoutBranch(VersionDevelopmentBranch.of(Version.wip(1, 1, 0)).value as VersionDevelopmentBranch)
-      .run();
-    expect(rtn.value).toEqual(VersionDevelopmentBranch.of(Version.wip(1, 1, 0)).value as VersionDevelopmentBranch);
+    const rtn = await adapter.checkoutBranch(ReleaseBranch.of(Version.wip(1, 1, 0)).value as ReleaseBranch).run();
+    expect(rtn.value).toEqual(ReleaseBranch.of(Version.wip(1, 1, 0)).value as ReleaseBranch);
     expect(simpleGit.checkoutBranch).toHaveBeenCalledWith('release/v1.1.0', 'master');
   });
 });
