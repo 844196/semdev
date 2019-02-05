@@ -10,6 +10,8 @@ const { ReleaseCommand } = require('../build/app/command/release');
 const { ReleaseVersion } = require('../build/core/use-case/release-version');
 const { ReleaseVersionAdapter } = require('../build/app/adapter/release-version-adapter');
 
+const config = require(`${process.cwd()}/semdev.config`);
+
 const run = (cmd) => async (...args) =>
   cmd
     .run(...args)
@@ -24,12 +26,6 @@ const run = (cmd) => async (...args) =>
       signale.error(err);
       process.exit(1);
     });
-
-const config = {
-  versionPrefix: 'v',
-  branchPrefix: 'release/',
-  masterBranch: 'master',
-};
 
 cli
   .command('prepare <major|minor|patch|new-version>', 'Prepare for next version development')
