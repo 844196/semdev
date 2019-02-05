@@ -25,7 +25,7 @@ const run = (cmd) => async (...args) =>
 const config = {
   versionPrefix: 'v',
   branchPrefix: 'release/',
-  mainStreamBranch: 'master',
+  masterBranch: 'master',
 };
 
 cli

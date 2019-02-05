@@ -50,7 +50,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
 
   public checkoutBranch(branch: VersionDevelopmentBranch) {
     return tryCatch(
-      () => this.repository.checkoutBranch(branch.toString(this.config), this.config.mainStreamBranch),
+      () => this.repository.checkoutBranch(branch.toString(this.config), this.config.masterBranch),
       String,
     ).map(() => branch);
   }
