@@ -1,14 +1,13 @@
+import { Either, left, right } from 'fp-ts/lib/Either';
 import { Version } from './version';
 
 export class VersionDevelopmentBranch {
   private constructor(private readonly version: Version) {}
 
-  public static of(version: Version) {
-    // TODO: return Either<string, VersionDevelopmentBranch>
-    if (version.released) {
-      throw new Error(`given version was already released: ${version.toString()}`);
-    }
-    return new VersionDevelopmentBranch(version);
+  public static of(version: Version): Either<string, VersionDevelopmentBranch> {
+    return version.wip
+      ? right(new VersionDevelopmentBranch(version))
+      : left(`given version was already released: ${version.toString()}`);
   }
 
   public toString(

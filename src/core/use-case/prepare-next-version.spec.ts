@@ -44,7 +44,8 @@ describe('PrepareNextVersion', () => {
       const rtn = await useCase.byReleaseType(releaseType).run();
       expect(rtn.isRight()).toBeTruthy();
       expect(port.fetchAllVersion).toHaveBeenCalled();
-      expect(port.checkoutBranch).toHaveBeenCalledWith(VersionDevelopmentBranch.of(Version.wip(1, 2, 2)));
+      expect(port.checkoutBranch).toHaveBeenCalledWith(VersionDevelopmentBranch.of(Version.wip(1, 2, 2))
+        .value as VersionDevelopmentBranch);
     });
 
     it('success2', async () => {
@@ -54,7 +55,8 @@ describe('PrepareNextVersion', () => {
       const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
       expect(rtn.isRight()).toBeTruthy();
       expect(port.fetchAllVersion).toHaveBeenCalled();
-      expect(port.checkoutBranch).toHaveBeenCalledWith(VersionDevelopmentBranch.of(Version.wip(0, 1, 0)));
+      expect(port.checkoutBranch).toHaveBeenCalledWith(VersionDevelopmentBranch.of(Version.wip(0, 1, 0))
+        .value as VersionDevelopmentBranch);
     });
 
     it('some error happen', async () => {

@@ -52,8 +52,10 @@ describe('PrepareNextVersionAdapter', () => {
   it('checkoutBranch()', async () => {
     simpleGit.checkoutBranch.mockResolvedValue(undefined);
 
-    const rtn = await adapter.checkoutBranch(VersionDevelopmentBranch.of(Version.wip(1, 1, 0))).run();
-    expect(rtn.value).toEqual(VersionDevelopmentBranch.of(Version.wip(1, 1, 0)));
+    const rtn = await adapter
+      .checkoutBranch(VersionDevelopmentBranch.of(Version.wip(1, 1, 0)).value as VersionDevelopmentBranch)
+      .run();
+    expect(rtn.value).toEqual(VersionDevelopmentBranch.of(Version.wip(1, 1, 0)).value as VersionDevelopmentBranch);
     expect(simpleGit.checkoutBranch).toHaveBeenCalledWith('release/v1.1.0', 'master');
   });
 });

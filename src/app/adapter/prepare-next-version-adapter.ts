@@ -1,4 +1,4 @@
-import { right } from 'fp-ts/lib/Either';
+import { Either, right } from 'fp-ts/lib/Either';
 import { insert, union } from 'fp-ts/lib/Set';
 import { fromEither, tryCatch } from 'fp-ts/lib/TaskEither';
 import { DefaultMethods, LoggerFunc } from 'signale';
@@ -28,7 +28,8 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   }
 
   public fetchAllVersion() {
-    const verIntoSet = insert(ordVersion);
+    const verIntoSet = (v: Either<string, Version>, vs: Set<Version>) =>
+      v.isRight() ? insert(ordVersion)(v.value, vs) : vs;
     const releasedVersions = tryCatch(() => this.repository.tags(), String)
       .map(({ all }) => all)
       .map((tags) =>

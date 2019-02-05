@@ -1,6 +1,6 @@
 import { findLast } from 'fp-ts/lib/Array';
 import { toArray } from 'fp-ts/lib/Set';
-import { TaskEither } from 'fp-ts/lib/TaskEither';
+import { fromEither, TaskEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseType } from '../model/release-type';
 import { ordVersion, Version } from '../model/version';
 import { VersionDevelopmentBranch } from '../model/version-development-branch';
@@ -33,6 +33,7 @@ export class PrepareNextVersion {
 
     const checkoutBranch = computeNextVersion
       .map(VersionDevelopmentBranch.of)
+      .chain(fromEither)
       .chain(this.port.checkoutBranch.bind(this.port))
       .chain(this.port.notify.createdBranch.bind(this.port));
 

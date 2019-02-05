@@ -1,5 +1,5 @@
 import { ReleaseType } from './release-type';
-import { InvalidVersionStringError, ordVersion, Version } from './version';
+import { ordVersion, Version } from './version';
 
 describe('Version', () => {
   it('initial()', () => {
@@ -33,14 +33,14 @@ describe('Version', () => {
 
   describe('releasedFromString()', () => {
     it('not pre', () => {
-      expect(Version.releasedFromString('1.2.3')).toEqual(Version.released(1, 2, 3));
-      expect(Version.releasedFromString('v1.2.3')).toEqual(Version.released(1, 2, 3));
-      expect(() => Version.releasedFromString('foo')).toThrow(new InvalidVersionStringError('given: foo'));
+      expect(Version.releasedFromString('1.2.3').value).toEqual(Version.released(1, 2, 3));
+      expect(Version.releasedFromString('v1.2.3').value).toEqual(Version.released(1, 2, 3));
+      expect(Version.releasedFromString('foo').value).toEqual('invalid version string given: foo');
     });
 
     it('pre', () => {
-      expect(Version.releasedFromString('1.2.3-alpha.1')).toEqual(Version.released(1, 2, 3, 'alpha.1'));
-      expect(Version.releasedFromString('v1.2.3-alpha.1')).toEqual(Version.released(1, 2, 3, 'alpha.1'));
+      expect(Version.releasedFromString('1.2.3-alpha.1').value).toEqual(Version.released(1, 2, 3, 'alpha.1'));
+      expect(Version.releasedFromString('v1.2.3-alpha.1').value).toEqual(Version.released(1, 2, 3, 'alpha.1'));
     });
   });
 
@@ -54,9 +54,9 @@ describe('Version', () => {
   });
 
   it('wipFromString()', () => {
-    expect(Version.wipFromString('1.2.3')).toEqual(Version.wip(1, 2, 3));
-    expect(Version.wipFromString('v1.2.3')).toEqual(Version.wip(1, 2, 3));
-    expect(() => Version.wipFromString('foo')).toThrow(new InvalidVersionStringError('given: foo'));
+    expect(Version.wipFromString('1.2.3').value).toEqual(Version.wip(1, 2, 3));
+    expect(Version.wipFromString('v1.2.3').value).toEqual(Version.wip(1, 2, 3));
+    expect(Version.wipFromString('foo').value).toEqual('invalid version string given: foo');
   });
 
   describe('increment()', () => {

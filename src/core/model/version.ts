@@ -1,3 +1,4 @@
+import { Either, left, right } from 'fp-ts/lib/Either';
 import { Ord } from 'fp-ts/lib/Ord';
 import * as semver from 'semver';
 import { ReleaseType } from './release-type';
@@ -23,29 +24,27 @@ export class Version {
     return new Version(major, minor, patch, preRelease, true);
   }
 
-  public static releasedFromString(str: string) {
-    // TODO: return Either<string, Version>
-    if (!Version.validString(str)) {
-      throw new InvalidVersionStringError(`given: ${str}`);
-    }
-    return Version.released(
-      semver.major(str),
-      semver.minor(str),
-      semver.patch(str),
-      (semver.prerelease(str) || []).join('.'),
-    );
+  public static releasedFromString(str: string): Either<string, Version> {
+    return Version.validString(str)
+      ? right(
+          Version.released(
+            semver.major(str),
+            semver.minor(str),
+            semver.patch(str),
+            (semver.prerelease(str) || []).join('.'),
+          ),
+        )
+      : left(`invalid version string given: ${str}`);
   }
 
   public static wip(major: number, minor: number, patch: number) {
     return new Version(major, minor, patch, '', false);
   }
 
-  public static wipFromString(str: string) {
-    // TODO: return Either<string, Version>
-    if (!Version.validString(str)) {
-      throw new InvalidVersionStringError(`given: ${str}`);
-    }
-    return Version.wip(semver.major(str), semver.minor(str), semver.patch(str));
+  public static wipFromString(str: string): Either<string, Version> {
+    return Version.validString(str)
+      ? right(Version.wip(semver.major(str), semver.minor(str), semver.patch(str)))
+      : left(`invalid version string given: ${str}`);
   }
 
   public get wip() {
@@ -80,8 +79,6 @@ export class Version {
     }`;
   }
 }
-
-export class InvalidVersionStringError extends Error {}
 
 export const ordVersion: Ord<Version> = {
   equals: (x, y) => x.equals(y),
