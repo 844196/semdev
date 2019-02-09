@@ -1,5 +1,5 @@
 export interface Config {
   versionPrefix: string;
-  branchPrefix: string;
+  releaseBranchPrefix: string;
   masterBranch: string;
 }

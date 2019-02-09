@@ -20,10 +20,15 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
       f(t);
       return fromEither<string, T>(right(t));
     };
+    const { releaseBranchPrefix, versionPrefix } = this.config;
     this.notify = {
       detectedLatest: tap((_) => this.signale.info(`detected latest version: ${_.toString(this.config)}`)),
       computedNext: tap((_) => this.signale.info(`compute next version: ${_.toString(this.config)}`)),
-      createdBranch: tap((_) => this.signale.success(`create development branch: ${_.toString(this.config)}`)),
+      createdBranch: tap((_) =>
+        this.signale.success(
+          `create development branch: ${_.toString({ branchPrefix: releaseBranchPrefix, versionPrefix })}`,
+        ),
+      ),
     };
   }
 
@@ -41,7 +46,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
       .map(({ all }) => all)
       .map((branches) =>
         branches
-          .map((x) => x.replace(new RegExp(String.raw`^${this.config.branchPrefix}`), ''))
+          .map((x) => x.replace(new RegExp(String.raw`^${this.config.releaseBranchPrefix}`), ''))
           .filter(Version.validString)
           .reduce((xs, x) => verIntoSet(Version.wipFromString(x), xs), new Set<Version>()),
       );
@@ -49,8 +54,13 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   }
 
   public checkoutBranch(branch: ReleaseBranch) {
+    const { releaseBranchPrefix, versionPrefix } = this.config;
     return tryCatch(
-      () => this.repository.checkoutBranch(branch.toString(this.config), this.config.masterBranch),
+      () =>
+        this.repository.checkoutBranch(
+          branch.toString({ branchPrefix: releaseBranchPrefix, versionPrefix }),
+          this.config.masterBranch,
+        ),
       String,
     ).map(() => branch);
   }

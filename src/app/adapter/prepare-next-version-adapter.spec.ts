@@ -7,7 +7,7 @@ import { PrepareNextVersionAdapter } from './prepare-next-version-adapter';
 
 const config: Config = {
   versionPrefix: 'v',
-  branchPrefix: 'release/',
+  releaseBranchPrefix: 'release/',
   masterBranch: 'master',
 };
 let simpleGit: jest.Mocked<SimpleGit>;

@@ -1,5 +1,5 @@
 module.exports = {
   versionPrefix: 'v',
-  branchPrefix: 'release/',
+  releaseBranchPrefix: 'release/',
   masterBranch: 'master',
-}
+};

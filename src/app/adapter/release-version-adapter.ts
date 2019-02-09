@@ -19,14 +19,17 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
       f(t);
       return fromEither<string, T>(right(t));
     };
+    const { releaseBranchPrefix, versionPrefix } = this.config;
     this.notify = {
-      merged: tap((_) => this.signale.success(`merged: ${_.toString(this.config)}`)),
-      tagged: tap((_) => this.signale.success(`version tag created: ${_.toString(this.config)}`)),
+      merged: tap((_) =>
+        this.signale.success(`merged: ${_.toString({ branchPrefix: releaseBranchPrefix, versionPrefix })}`),
+      ),
+      tagged: tap((_) => this.signale.success(`version tag created: ${_.toString({ versionPrefix })}`)),
     };
   }
 
   public mergeBranch(branch: ReleaseBranch) {
-    const { branchPrefix, versionPrefix, masterBranch } = this.config;
+    const { releaseBranchPrefix: branchPrefix, versionPrefix, masterBranch } = this.config;
     const from = branch.toString({ branchPrefix, versionPrefix });
     const to = masterBranch;
 
