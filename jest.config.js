@@ -11,4 +11,9 @@ module.exports = {
   collectCoverageFrom: [
     '<rootDir>/**/*.ts',
   ],
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    'src/app/config.ts',
+    'src/app/command/',
+  ],
 }

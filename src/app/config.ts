@@ -3,3 +3,9 @@ export interface Config {
   releaseBranchPrefix: string;
   masterBranch: string;
 }
+
+export const defaultConfig: Config = {
+  versionPrefix: 'v',
+  releaseBranchPrefix: 'release/',
+  masterBranch: 'master',
+};

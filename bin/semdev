@@ -1,59 +1,33 @@
 #!/usr/bin/env node
 
 const cli = require('cac')();
+const cosmiconfig = require('cosmiconfig');
 const signale = require('signale');
-const { PrepareCommand } = require('../build/app/command/prepare');
-const { PrepareNextVersion } = require('../build/core/use-case/prepare-next-version');
-const { PrepareNextVersionAdapter } = require('../build/app/adapter/prepare-next-version-adapter');
 const simpleGit = require('simple-git/promise');
+const { defaultConfig } = require('../build/app/config');
+const { PrepareCommand } = require('../build/app/command/prepare');
 const { ReleaseCommand } = require('../build/app/command/release');
-const { ReleaseVersion } = require('../build/core/use-case/release-version');
-const { ReleaseVersionAdapter } = require('../build/app/adapter/release-version-adapter');
 
-const config = require(`${process.cwd()}/semdev.config`);
+const found = cosmiconfig('semdev').searchSync();
+const config = found ? found.config : defaultConfig;
 
-const run = (cmd) => async (...args) =>
-  cmd
-    .run(...args)
-    .run()
-    .then((result) => {
-      if (result.isLeft()) {
-        return Promise.reject(result.value);
-      }
-      process.exit(0);
-    })
-    .catch((err) => {
-      signale.error(err);
-      process.exit(1);
-    });
+const git = simpleGit().silent(true);
 
 cli
   .command('prepare <major|minor|patch|new-version>', 'Prepare for next version development')
   .option('--verbose', 'Print progress messages', { default: false })
   .example((me) => `${me} prepare major`)
   .example((me) => `${me} prepare v1.2.3`)
-  .action((releaseTypeOrVersion, { verbose }) => {
-    const useCaseAdapter = new PrepareNextVersionAdapter(
-      config,
-      simpleGit().silent(true),
-      verbose ? signale : { info: () => undefined, success: signale.success },
-    );
-    const useCase = new PrepareNextVersion(useCaseAdapter);
-    run(new PrepareCommand(useCase))(releaseTypeOrVersion);
-  });
+  .action(() =>
+    new PrepareCommand({ config, logger: signale, git }).run(...[cli.options, ...cli.args]).then(process.exit),
+  );
 
 cli
   .command('release <version>', 'Merge version development branch & create tag')
   .example((me) => `${me} merge v1.2.3`)
-  .action((version) => {
-    const useCaseAdapter = new ReleaseVersionAdapter(
-      config,
-      simpleGit().silent(true),
-      { success: signale.success },
-    );
-    const useCase = new ReleaseVersion(useCaseAdapter);
-    run(new ReleaseCommand(useCase))(version);
-  });
+  .action(() =>
+    new ReleaseCommand({ config, logger: signale, git }).run(...[cli.options, ...cli.args]).then(process.exit),
+  );
 
 cli.on('command:*', () => {
   signale.error(`unknown sub command: ${cli.args.join(' ')}`);
