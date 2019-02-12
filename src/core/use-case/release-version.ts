@@ -17,11 +17,12 @@ export class ReleaseVersion {
   public constructor(private readonly port: ReleaseVersionPort) {}
 
   public byVersion(version: Version) {
-    return fromEither(ReleaseBranch.of(version))
+    const mergeBranch = fromEither(ReleaseBranch.of(version))
       .chain(this.port.mergeBranch.bind(this.port))
-      .chain(this.port.notify.merged.bind(this.port))
-      .map((branch) => branch.version)
-      .chain(this.port.createTag.bind(this.port))
-      .chain(this.port.notify.tagged.bind(this.port));
+      .chain(this.port.notify.merged.bind(this.port));
+
+    const createTag = this.port.createTag(version).chain(this.port.notify.tagged.bind(this.port));
+
+    return mergeBranch.chainSecond(createTag);
   }
 }

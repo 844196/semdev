@@ -1,4 +1,4 @@
-import { left, right } from 'fp-ts/lib/Either';
+import { right } from 'fp-ts/lib/Either';
 import { fromEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
@@ -13,7 +13,7 @@ beforeEach(() => {
     (): PrepareNextVersionPort => {
       return {
         fetchAllVersion: jest.fn(),
-        checkoutBranch: jest.fn(),
+        checkoutBranch: jest.fn((a) => fromEither(right(a))),
         notify: {
           detectedLatest: jest.fn((a) => fromEither(right(a))),
           computedNext: jest.fn((a) => fromEither(right(a))),
@@ -39,7 +39,6 @@ describe('PrepareNextVersion', () => {
       const releaseType = ReleaseType.patch;
 
       port.fetchAllVersion.mockReturnValue(fromEither(right(new Set(versions))));
-      port.checkoutBranch.mockReturnValue(fromEither(right(ReleaseBranch.of(Version.wip(1, 2, 2)))));
 
       const rtn = await useCase.byReleaseType(releaseType).run();
       expect(rtn.isRight()).toBeTruthy();
@@ -49,19 +48,21 @@ describe('PrepareNextVersion', () => {
 
     it('success2', async () => {
       port.fetchAllVersion.mockReturnValue(fromEither(right(new Set())));
-      port.checkoutBranch.mockReturnValue(fromEither(right(ReleaseBranch.of(Version.wip(0, 1, 0)))));
 
       const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
       expect(rtn.isRight()).toBeTruthy();
       expect(port.fetchAllVersion).toHaveBeenCalled();
       expect(port.checkoutBranch).toHaveBeenCalledWith(ReleaseBranch.of(Version.wip(0, 1, 0)).value as ReleaseBranch);
     });
+  });
 
-    it('some error happen', async () => {
-      port.fetchAllVersion.mockReturnValue(fromEither(left('command not found: git')));
+  it('byVersion()', async () => {
+    const version = Version.wip(1, 0, 0);
+    const expectedReleaseBranch = ReleaseBranch.of(version).value as ReleaseBranch;
 
-      const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
-      expect(rtn.value).toEqual('command not found: git');
-    });
+    const rtn = await useCase.byVersion(version).run();
+
+    expect(rtn.isRight).toBeTruthy();
+    expect(port.checkoutBranch).toHaveBeenCalledWith(expectedReleaseBranch);
   });
 });
