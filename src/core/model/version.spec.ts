@@ -35,7 +35,7 @@ describe('Version', () => {
     it('not pre', () => {
       expect(Version.releasedFromString('1.2.3').value).toEqual(Version.released(1, 2, 3));
       expect(Version.releasedFromString('v1.2.3').value).toEqual(Version.released(1, 2, 3));
-      expect(Version.releasedFromString('foo').value).toEqual('invalid version string given: foo');
+      expect(Version.releasedFromString('foo').value).toEqual(new Error('invalid version string given: foo'));
     });
 
     it('pre', () => {
@@ -56,7 +56,7 @@ describe('Version', () => {
   it('wipFromString()', () => {
     expect(Version.wipFromString('1.2.3').value).toEqual(Version.wip(1, 2, 3));
     expect(Version.wipFromString('v1.2.3').value).toEqual(Version.wip(1, 2, 3));
-    expect(Version.wipFromString('foo').value).toEqual('invalid version string given: foo');
+    expect(Version.wipFromString('foo').value).toEqual(new Error('invalid version string given: foo'));
   });
 
   describe('increment()', () => {

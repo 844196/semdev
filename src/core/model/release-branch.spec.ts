@@ -3,7 +3,9 @@ import { Version } from './version';
 
 describe('ReleaseBranch', () => {
   it('of()', () => {
-    expect(ReleaseBranch.of(Version.released(1, 2, 3)).value).toBe('given version was already released: 1.2.3');
+    expect(ReleaseBranch.of(Version.released(1, 2, 3)).value).toEqual(
+      new Error('given version was already released: 1.2.3'),
+    );
   });
 
   it('toString()', () => {

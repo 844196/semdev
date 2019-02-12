@@ -9,8 +9,8 @@ interface NotificationType {
 }
 
 export interface ReleaseVersionPort extends NotifiablePort<NotificationType> {
-  mergeBranch(branch: ReleaseBranch): TaskEither<string, ReleaseBranch>;
-  createTag(version: Version): TaskEither<string, Version>;
+  mergeBranch(branch: ReleaseBranch): TaskEither<Error, ReleaseBranch>;
+  createTag(version: Version): TaskEither<Error, Version>;
 }
 
 export class ReleaseVersion {

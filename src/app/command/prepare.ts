@@ -24,6 +24,6 @@ export class PrepareCommand extends Base<{ git: SimpleGit }, [string], { verbose
       return useCase.byVersion(version.value);
     }
 
-    return fromEither(left(`invalid release type or version given: ${releaseTypeOrVersionStr}`));
+    return fromEither(left(new Error(`invalid release type or version given: ${releaseTypeOrVersionStr}`)));
   }
 }

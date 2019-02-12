@@ -4,10 +4,10 @@ import { Version } from './version';
 export class ReleaseBranch {
   private constructor(public readonly version: Version) {}
 
-  public static of(version: Version): Either<string, ReleaseBranch> {
+  public static of(version: Version): Either<Error, ReleaseBranch> {
     return version.wip
       ? right(new ReleaseBranch(version))
-      : left(`given version was already released: ${version.toString()}`);
+      : left(new Error(`given version was already released: ${version.toString()}`));
   }
 
   public toString(

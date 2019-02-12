@@ -13,8 +13,8 @@ interface NotificationType {
 }
 
 export interface PrepareNextVersionPort extends NotifiablePort<NotificationType> {
-  fetchAllVersion(): TaskEither<string, Set<Version>>;
-  checkoutBranch(branch: ReleaseBranch): TaskEither<string, ReleaseBranch>;
+  fetchAllVersion(): TaskEither<Error, Set<Version>>;
+  checkoutBranch(branch: ReleaseBranch): TaskEither<Error, ReleaseBranch>;
 }
 
 export class PrepareNextVersion {

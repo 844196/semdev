@@ -16,6 +16,6 @@ export class ReleaseCommand extends Base<{ git: SimpleGit }, [string]> {
       return useCase.byVersion(version.value);
     }
 
-    return fromEither(left(`invalid version given: ${versionStr}`));
+    return fromEither(left(new Error(`invalid version given: ${versionStr}`)));
   }
 }

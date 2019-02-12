@@ -1,4 +1,4 @@
-import { right } from 'fp-ts/lib/Either';
+import { right, toError } from 'fp-ts/lib/Either';
 import { fromEither, tryCatch } from 'fp-ts/lib/TaskEither';
 import { DefaultMethods, LoggerFunc } from 'signale';
 import { SimpleGit } from 'simple-git/promise';
@@ -17,7 +17,7 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
   ) {
     const tap = <T>(f: (t: T) => void) => (t: T) => {
       f(t);
-      return fromEither<string, T>(right(t));
+      return fromEither<Error, T>(right(t));
     };
     const { releaseBranchPrefix, versionPrefix } = this.config;
     this.notify = {
@@ -33,8 +33,8 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
     const from = branch.toString({ branchPrefix, versionPrefix });
     const to = masterBranch;
 
-    const checkout = tryCatch(() => this.repository.checkout(to), String);
-    const merge = tryCatch(() => this.repository.merge([from, '--no-ff']), String);
+    const checkout = tryCatch(() => this.repository.checkout(to), toError);
+    const merge = tryCatch(() => this.repository.merge([from, '--no-ff']), toError);
 
     return checkout.chainSecond(merge).map(() => branch);
   }
@@ -43,8 +43,8 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
     const { versionPrefix, masterBranch } = this.config;
     const versionTag = version.toString({ versionPrefix });
 
-    const checkout = tryCatch(() => this.repository.checkout(masterBranch), String);
-    const createTag = tryCatch(() => this.repository.addTag(versionTag), String);
+    const checkout = tryCatch(() => this.repository.checkout(masterBranch), toError);
+    const createTag = tryCatch(() => this.repository.addTag(versionTag), toError);
 
     return checkout.chainSecond(createTag).map(() => version);
   }

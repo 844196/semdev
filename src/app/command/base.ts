@@ -10,7 +10,7 @@ export abstract class Base<Deps extends {}, Args extends string[] = [], Opts ext
     },
   ) {}
 
-  protected abstract build(opts: Opts, ...args: Args): TaskEither<string, any>;
+  protected abstract build(opts: Opts, ...args: Args): TaskEither<Error, any>;
 
   public async run(opts: Opts, ...args: Args) {
     try {

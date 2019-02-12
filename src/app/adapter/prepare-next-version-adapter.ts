@@ -1,4 +1,4 @@
-import { Either, right } from 'fp-ts/lib/Either';
+import { Either, right, toError } from 'fp-ts/lib/Either';
 import { insert, union } from 'fp-ts/lib/Set';
 import { fromEither, tryCatch } from 'fp-ts/lib/TaskEither';
 import { DefaultMethods, LoggerFunc } from 'signale';
@@ -18,7 +18,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   ) {
     const tap = <T>(f: (t: T) => void) => (t: T) => {
       f(t);
-      return fromEither<string, T>(right(t));
+      return fromEither<Error, T>(right(t));
     };
     const { releaseBranchPrefix, versionPrefix } = this.config;
     this.notify = {
@@ -33,16 +33,16 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   }
 
   public fetchAllVersion() {
-    const verIntoSet = (v: Either<string, Version>, vs: Set<Version>) =>
+    const verIntoSet = (v: Either<Error, Version>, vs: Set<Version>) =>
       v.isRight() ? insert(ordVersion)(v.value, vs) : vs;
-    const releasedVersions = tryCatch(() => this.repository.tags(), String)
+    const releasedVersions = tryCatch(() => this.repository.tags(), toError)
       .map(({ all }) => all)
       .map((tags) =>
         tags
           .filter(Version.validString)
           .reduce((xs, x) => verIntoSet(Version.releasedFromString(x), xs), new Set<Version>()),
       );
-    const wipVersions = tryCatch(() => this.repository.branchLocal(), String)
+    const wipVersions = tryCatch(() => this.repository.branchLocal(), toError)
       .map(({ all }) => all)
       .map((branches) =>
         branches
@@ -61,7 +61,7 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
           branch.toString({ branchPrefix: releaseBranchPrefix, versionPrefix }),
           this.config.masterBranch,
         ),
-      String,
+      toError,
     ).map(() => branch);
   }
 }

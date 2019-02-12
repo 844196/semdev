@@ -24,7 +24,7 @@ export class Version {
     return new Version(major, minor, patch, preRelease, true);
   }
 
-  public static releasedFromString(str: string): Either<string, Version> {
+  public static releasedFromString(str: string): Either<Error, Version> {
     return Version.validString(str)
       ? right(
           Version.released(
@@ -34,17 +34,17 @@ export class Version {
             (semver.prerelease(str) || []).join('.'),
           ),
         )
-      : left(`invalid version string given: ${str}`);
+      : left(new Error(`invalid version string given: ${str}`));
   }
 
   public static wip(major: number, minor: number, patch: number) {
     return new Version(major, minor, patch, '', false);
   }
 
-  public static wipFromString(str: string): Either<string, Version> {
+  public static wipFromString(str: string): Either<Error, Version> {
     return Version.validString(str)
       ? right(Version.wip(semver.major(str), semver.minor(str), semver.patch(str)))
-      : left(`invalid version string given: ${str}`);
+      : left(new Error(`invalid version string given: ${str}`));
   }
 
   public get wip() {
