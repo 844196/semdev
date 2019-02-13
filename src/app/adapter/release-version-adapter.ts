@@ -26,12 +26,12 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
       tryCatch<Error, void>(
         () =>
           new Promise((ok, ng) => {
-            spawn(cmd, { shell: true, stdio: 'inherit', env: { ...process.env, ...env } }).on('close', (code) =>
-              code === 0 ? ok() : ng(`command failed: ${cmd}`),
-            );
+            const p = spawn(cmd, { shell: true, env: { ...process.env, ...env } });
+            p.stdout.on('data', (data) => this.logger.note(data.toString().trimRight()).run());
+            p.on('close', (code) => (code === 0 ? ok() : ng(`command failed: ${cmd}`)));
           }),
         toError,
-      );
+      ).chainFirst(fromIO(this.logger.complete(`exit: ${cmd}`)));
     const hookCmds = (t: 'pre' | 'post') =>
       lookup('release', config.hooks || {})
         .chain((x) => lookup(t, x || {}))
@@ -47,7 +47,7 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
     this.notify = {
       merged: (x) => fromIO(this.logger.success(`merged: ${x.toString({ branchPrefix, versionPrefix })}`)),
       tagged: (x) => fromIO(this.logger.success(`tag created: ${x.toString({ versionPrefix })}`)),
-      runHook: (x) => fromIO(this.logger.info(`run: ${x.inspect()}`)),
+      runHook: (x) => fromIO(this.logger.start(`run: ${x.inspect()}`)),
     };
   }
 

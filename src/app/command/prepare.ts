@@ -11,8 +11,12 @@ import { Base } from './base';
 export class PrepareCommand extends Base<{ git: SimpleGit }, [string], { verbose: boolean }> {
   protected build({ verbose }: { verbose: boolean }, releaseTypeOrVersionStr: string) {
     const adapter = new PrepareNextVersionAdapter(this.deps.config, this.deps.git, {
-      success: this.deps.logger.success.bind(this.deps.logger),
+      log: verbose ? this.deps.logger.log.bind(this.deps.logger) : () => new IO(() => undefined),
+      note: verbose ? this.deps.logger.note.bind(this.deps.logger) : () => new IO(() => undefined),
       info: verbose ? this.deps.logger.info.bind(this.deps.logger) : () => new IO(() => undefined),
+      start: this.deps.logger.start.bind(this.deps.logger),
+      complete: this.deps.logger.complete.bind(this.deps.logger),
+      success: this.deps.logger.success.bind(this.deps.logger),
       error: this.deps.logger.error.bind(this.deps.logger),
     });
     const useCase = new PrepareNextVersion(adapter);
