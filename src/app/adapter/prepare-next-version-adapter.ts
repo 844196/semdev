@@ -1,12 +1,12 @@
-import { Either, right, toError } from 'fp-ts/lib/Either';
+import { Either, toError } from 'fp-ts/lib/Either';
 import { insert, union } from 'fp-ts/lib/Set';
-import { fromEither, tryCatch } from 'fp-ts/lib/TaskEither';
-import { DefaultMethods, LoggerFunc } from 'signale';
+import { fromIO, tryCatch } from 'fp-ts/lib/TaskEither';
 import { SimpleGit } from 'simple-git/promise';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { ordVersion, Version } from '../../core/model/version';
 import { PrepareNextVersionPort } from '../../core/use-case/prepare-next-version';
 import { Config } from '../config';
+import { Logger } from '../shim/logger';
 
 export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   public readonly notify: PrepareNextVersionPort['notify'];
@@ -14,21 +14,14 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   public constructor(
     private readonly config: Config,
     private readonly repository: SimpleGit,
-    private readonly signale: Record<Extract<DefaultMethods, 'success' | 'info'>, LoggerFunc>,
+    private readonly logger: Logger,
   ) {
-    const tap = <T>(f: (t: T) => void) => (t: T) => {
-      f(t);
-      return fromEither<Error, T>(right(t));
-    };
-    const { releaseBranchPrefix, versionPrefix } = this.config;
+    const { releaseBranchPrefix: branchPrefix, versionPrefix } = this.config;
     this.notify = {
-      detectedLatest: tap((_) => this.signale.info(`detected latest version: ${_.toString(this.config)}`)),
-      computedNext: tap((_) => this.signale.info(`compute next version: ${_.toString(this.config)}`)),
-      createdBranch: tap((_) =>
-        this.signale.success(
-          `create development branch: ${_.toString({ branchPrefix: releaseBranchPrefix, versionPrefix })}`,
-        ),
-      ),
+      detectedLatest: (x) => fromIO(this.logger.info(`detected latest version: ${x.toString(this.config)}`)),
+      computedNext: (x) => fromIO(this.logger.info(`compute next version: ${x.toString(this.config)}`)),
+      createdBranch: (x) =>
+        fromIO(this.logger.success(`create development branch: ${x.toString({ branchPrefix, versionPrefix })}`)),
     };
   }
 

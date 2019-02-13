@@ -25,24 +25,24 @@ export class PrepareNextVersion {
       .fetchAllVersion()
       .map(toArray(ordVersion))
       .map((vers) => findLast(vers, (ver) => ver.released).getOrElse(Version.initial()))
-      .chain(this.port.notify.detectedLatest.bind(this.port));
+      .chain((latest) => this.port.notify.detectedLatest(latest).map(() => latest));
 
     const computeNextVersion = detectLatestVersion
       .map((latest) => latest.increment(releaseType))
-      .chain(this.port.notify.computedNext.bind(this.port));
+      .chain((latest) => this.port.notify.computedNext(latest).map(() => latest));
 
     const checkoutBranch = computeNextVersion
       .map(ReleaseBranch.of)
       .chain(fromEither)
-      .chain(this.port.checkoutBranch.bind(this.port))
-      .chain(this.port.notify.createdBranch.bind(this.port));
+      .chain((branch) => this.port.checkoutBranch(branch))
+      .chain((branch) => this.port.notify.createdBranch(branch));
 
     return checkoutBranch;
   }
 
   public byVersion(version: Version) {
     return fromEither(ReleaseBranch.of(version))
-      .chain(this.port.checkoutBranch.bind(this.port))
-      .chain(this.port.notify.createdBranch.bind(this.port));
+      .chain((branch) => this.port.checkoutBranch(branch))
+      .chain((branch) => this.port.notify.createdBranch(branch));
   }
 }

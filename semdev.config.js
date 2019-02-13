@@ -4,7 +4,14 @@ module.exports = {
   masterBranch: 'master',
   hooks: {
     release: {
-      pre: ['yarn ci'],
+      pre: [
+        'yarn ci:type',
+        'yarn ci:lint',
+        'yarn build',
+      ],
+      post: [
+        'echo "Release ${NEXT_VERSION}!"',
+      ],
     },
   },
 };

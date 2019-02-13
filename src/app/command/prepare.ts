@@ -1,4 +1,5 @@
 import { left } from 'fp-ts/lib/Either';
+import { IO } from 'fp-ts/lib/IO';
 import { fromEither } from 'fp-ts/lib/TaskEither';
 import { SimpleGit } from 'simple-git/promise';
 import { isReleaseType } from '../../core/model/release-type';
@@ -10,8 +11,9 @@ import { Base } from './base';
 export class PrepareCommand extends Base<{ git: SimpleGit }, [string], { verbose: boolean }> {
   protected build({ verbose }: { verbose: boolean }, releaseTypeOrVersionStr: string) {
     const adapter = new PrepareNextVersionAdapter(this.deps.config, this.deps.git, {
-      info: verbose ? this.deps.logger.info : () => undefined,
-      success: this.deps.logger.success,
+      success: this.deps.logger.success.bind(this.deps.logger),
+      info: verbose ? this.deps.logger.info.bind(this.deps.logger) : () => new IO(() => undefined),
+      error: this.deps.logger.error.bind(this.deps.logger),
     });
     const useCase = new PrepareNextVersion(adapter);
 

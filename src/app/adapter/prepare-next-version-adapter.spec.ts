@@ -1,8 +1,9 @@
-import { DefaultMethods, LoggerFunc } from 'signale';
+import { IO } from 'fp-ts/lib/IO';
 import { SimpleGit } from 'simple-git/promise';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { Version } from '../../core/model/version';
 import { Config } from '../config';
+import { Logger } from '../shim/logger';
 import { PrepareNextVersionAdapter } from './prepare-next-version-adapter';
 
 const config: Config = {
@@ -12,7 +13,7 @@ const config: Config = {
 };
 let simpleGit: jest.Mocked<SimpleGit>;
 let adapter: PrepareNextVersionAdapter;
-let signale: jest.Mocked<Record<Extract<DefaultMethods, 'success' | 'info'>, LoggerFunc>>;
+let logger: jest.Mocked<Logger>;
 
 beforeEach(() => {
   simpleGit = jest.fn(
@@ -24,8 +25,14 @@ beforeEach(() => {
       };
     },
   )();
-  signale = jest.fn(() => ({ success: jest.fn(() => undefined), info: jest.fn(() => undefined) }))();
-  adapter = new PrepareNextVersionAdapter(config, simpleGit, signale);
+  logger = jest.fn(() => {
+    return {
+      info: () => new IO(() => undefined),
+      success: () => new IO(() => undefined),
+      error: () => new IO(() => undefined),
+    };
+  })();
+  adapter = new PrepareNextVersionAdapter(config, simpleGit, logger);
 });
 
 describe('PrepareNextVersionAdapter', () => {

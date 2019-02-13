@@ -4,6 +4,7 @@ const cli = require('cac')();
 const cosmiconfig = require('cosmiconfig');
 const signale = require('signale');
 const simpleGit = require('simple-git/promise');
+const { SignaleLogger } = require('../build/app/shim/logger');
 const { defaultConfig } = require('../build/app/config');
 const { PrepareCommand } = require('../build/app/command/prepare');
 const { ReleaseCommand } = require('../build/app/command/release');
@@ -13,20 +14,22 @@ const config = found ? found.config : defaultConfig;
 
 const git = simpleGit().silent(true);
 
+const logger = new SignaleLogger(signale);
+
 cli
   .command('prepare <major|minor|patch|new-version>', 'Prepare for next version development')
   .option('--verbose', 'Print progress messages', { default: false })
   .example((me) => `${me} prepare major`)
   .example((me) => `${me} prepare v1.2.3`)
   .action(() =>
-    new PrepareCommand({ config, logger: signale, git }).run(...[cli.options, ...cli.args]).then(process.exit),
+    new PrepareCommand({ config, logger, git }).run(...[cli.options, ...cli.args]).then(process.exit),
   );
 
 cli
   .command('release <version>', 'Merge version development branch & create tag')
   .example((me) => `${me} merge v1.2.3`)
   .action(() =>
-    new ReleaseCommand({ config, logger: signale, git }).run(...[cli.options, ...cli.args]).then(process.exit),
+    new ReleaseCommand({ config, logger, git }).run(...[cli.options, ...cli.args]).then(process.exit),
   );
 
 cli.on('command:*', () => {

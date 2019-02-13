@@ -1,17 +1,17 @@
 import { spawn } from 'child_process';
 import { findLast, mapOption } from 'fp-ts/lib/Array';
-import { right, toError } from 'fp-ts/lib/Either';
+import { toError } from 'fp-ts/lib/Either';
 import { fromNullable } from 'fp-ts/lib/Option';
 import { lookup } from 'fp-ts/lib/Record';
 import { insert, toArray } from 'fp-ts/lib/Set';
-import { fromEither, tryCatch } from 'fp-ts/lib/TaskEither';
-import { DefaultMethods, LoggerFunc } from 'signale';
+import { fromIO, tryCatch } from 'fp-ts/lib/TaskEither';
 import { SimpleGit } from 'simple-git/promise';
 import { CLIHookAction } from '../../core/model/cli-hook-action';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { ordVersion, Version } from '../../core/model/version';
 import { ReleaseVersionPort } from '../../core/use-case/release-version';
 import { Config } from '../config';
+import { Logger } from '../shim/logger';
 
 export class ReleaseVersionAdapter implements ReleaseVersionPort {
   public readonly hooks: ReleaseVersionPort['hooks'];
@@ -20,7 +20,7 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
   public constructor(
     private readonly config: Config,
     private readonly repository: SimpleGit,
-    private readonly signale: Record<Extract<DefaultMethods, 'success' | 'info'>, LoggerFunc>,
+    private readonly logger: Logger,
   ) {
     const run = (cmd: string, env: Record<string, string> = {}) =>
       tryCatch<Error, void>(
@@ -43,17 +43,11 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
       post: hookCmds('post'),
     };
 
-    const tap = <T>(f: (t: T) => void) => (t: T) => {
-      f(t);
-      return fromEither<Error, T>(right(t));
-    };
-    const { releaseBranchPrefix, versionPrefix } = this.config;
+    const { releaseBranchPrefix: branchPrefix, versionPrefix } = this.config;
     this.notify = {
-      merged: tap((_) =>
-        this.signale.success(`merged: ${_.toString({ branchPrefix: releaseBranchPrefix, versionPrefix })}`),
-      ),
-      tagged: tap((_) => this.signale.success(`version tag created: ${_.toString({ versionPrefix })}`)),
-      runHook: tap((x) => this.signale.info(`run: ${x.inspect()}`)),
+      merged: (x) => fromIO(this.logger.success(`merged: ${x.toString({ branchPrefix, versionPrefix })}`)),
+      tagged: (x) => fromIO(this.logger.success(`tag created: ${x.toString({ versionPrefix })}`)),
+      runHook: (x) => fromIO(this.logger.info(`run: ${x.inspect()}`)),
     };
   }
 
