@@ -5,25 +5,23 @@ import { SimpleGit } from 'simple-git/promise';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { ordVersion, Version } from '../../core/model/version';
 import { PrepareNextVersionPort } from '../../core/use-case/prepare-next-version';
-import { Config } from '../config';
+import { Config, toStringerConfig } from '../config';
 import { Logger } from '../shim/logger';
 
 export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
-  public readonly notify: PrepareNextVersionPort['notify'];
+  public readonly notify: PrepareNextVersionPort['notify'] = {
+    detectedLatest: (x) =>
+      fromIO(this.logger.info(`detected latest version: ${x.toString(toStringerConfig(this.config))}`)),
+    computedNext: (x) => fromIO(this.logger.info(`compute next version: ${x.toString(toStringerConfig(this.config))}`)),
+    createdBranch: (x) =>
+      fromIO(this.logger.success(`create development branch: ${x.toString(toStringerConfig(this.config))}`)),
+  };
 
   public constructor(
     private readonly config: Config,
     private readonly repository: SimpleGit,
     private readonly logger: Logger,
-  ) {
-    const { releaseBranchPrefix: branchPrefix, versionPrefix } = this.config;
-    this.notify = {
-      detectedLatest: (x) => fromIO(this.logger.info(`detected latest version: ${x.toString(this.config)}`)),
-      computedNext: (x) => fromIO(this.logger.info(`compute next version: ${x.toString(this.config)}`)),
-      createdBranch: (x) =>
-        fromIO(this.logger.success(`create development branch: ${x.toString({ branchPrefix, versionPrefix })}`)),
-    };
-  }
+  ) {}
 
   public fetchAllVersion() {
     const verIntoSet = (v: Either<Error, Version>, vs: Set<Version>) =>
@@ -47,13 +45,8 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   }
 
   public checkoutBranch(branch: ReleaseBranch) {
-    const { releaseBranchPrefix, versionPrefix } = this.config;
     return tryCatch(
-      () =>
-        this.repository.checkoutBranch(
-          branch.toString({ branchPrefix: releaseBranchPrefix, versionPrefix }),
-          this.config.masterBranch,
-        ),
+      () => this.repository.checkoutBranch(branch.toString(toStringerConfig(this.config)), this.config.masterBranch),
       toError,
     ).map(() => branch);
   }

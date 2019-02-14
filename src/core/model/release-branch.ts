@@ -1,5 +1,5 @@
 import { Either, left, right } from 'fp-ts/lib/Either';
-import { Version } from './version';
+import { Version, VersionStringerConfig } from './version';
 
 export class ReleaseBranch {
   private constructor(public readonly version: Version) {}
@@ -11,11 +11,15 @@ export class ReleaseBranch {
   }
 
   public toString(
-    { branchPrefix, versionPrefix }: { branchPrefix: string; versionPrefix: string } = {
+    { branchPrefix, versionPrefix }: ReleaseBranchStringerConfig = {
       branchPrefix: '',
       versionPrefix: '',
     },
   ) {
     return `${branchPrefix}${this.version.toString({ versionPrefix })}`;
   }
+}
+
+export interface ReleaseBranchStringerConfig extends VersionStringerConfig {
+  branchPrefix: string;
 }

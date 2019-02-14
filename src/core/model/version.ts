@@ -73,7 +73,7 @@ export class Version {
     return semver.gt(this.toString(), other.toString());
   }
 
-  public toString({ versionPrefix }: { versionPrefix: string } = { versionPrefix: '' }) {
+  public toString({ versionPrefix }: VersionStringerConfig = { versionPrefix: '' }) {
     return `${versionPrefix}${this.major}.${this.minor}.${this.patch}${
       this.preRelease.length > 0 ? `-${this.preRelease}` : ''
     }`;
@@ -84,3 +84,7 @@ export const ordVersion: Ord<Version> = {
   equals: (x, y) => x.equals(y),
   compare: (x, y) => (x.equals(y) ? 0 : x.greaterThan(y) ? 1 : -1),
 };
+
+export interface VersionStringerConfig {
+  versionPrefix: string;
+}

@@ -18,3 +18,8 @@ export const defaultConfig: Config = {
   releaseBranchPrefix: 'release/',
   masterBranch: 'master',
 };
+
+export const toStringerConfig = ({ versionPrefix, releaseBranchPrefix: branchPrefix }: Config) => ({
+  versionPrefix,
+  branchPrefix,
+});

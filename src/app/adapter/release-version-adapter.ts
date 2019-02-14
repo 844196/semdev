@@ -10,12 +10,16 @@ import { CLIHookAction } from '../../core/model/cli-hook-action';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { ordVersion, Version } from '../../core/model/version';
 import { ReleaseVersionPort } from '../../core/use-case/release-version';
-import { Config } from '../config';
+import { Config, toStringerConfig } from '../config';
 import { Logger } from '../shim/logger';
 
 export class ReleaseVersionAdapter implements ReleaseVersionPort {
   public readonly hooks: ReleaseVersionPort['hooks'];
-  public readonly notify: ReleaseVersionPort['notify'];
+  public readonly notify: ReleaseVersionPort['notify'] = {
+    merged: (x) => fromIO(this.logger.success(`merged: ${x.toString(toStringerConfig(this.config))}`)),
+    tagged: (x) => fromIO(this.logger.success(`tag created: ${x.toString(toStringerConfig(this.config))}`)),
+    runHook: (x) => fromIO(this.logger.start(`run: ${x.inspect()}`)),
+  };
 
   public constructor(
     private readonly config: Config,
@@ -41,13 +45,6 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
     this.hooks = {
       pre: hookCmds('pre'),
       post: hookCmds('post'),
-    };
-
-    const { releaseBranchPrefix: branchPrefix, versionPrefix } = this.config;
-    this.notify = {
-      merged: (x) => fromIO(this.logger.success(`merged: ${x.toString({ branchPrefix, versionPrefix })}`)),
-      tagged: (x) => fromIO(this.logger.success(`tag created: ${x.toString({ versionPrefix })}`)),
-      runHook: (x) => fromIO(this.logger.start(`run: ${x.inspect()}`)),
     };
   }
 
