@@ -1,13 +1,10 @@
-import { Either, left, right } from 'fp-ts/lib/Either';
-import { Version, VersionStringerConfig } from './version';
+import { VersionStringerConfig, WipVersion } from './version';
 
 export class ReleaseBranch {
-  private constructor(public readonly version: Version) {}
+  private constructor(public readonly version: WipVersion) {}
 
-  public static of(version: Version): Either<Error, ReleaseBranch> {
-    return version.wip
-      ? right(new ReleaseBranch(version))
-      : left(new Error(`given version was already released: ${version.toString()}`));
+  public static of(version: WipVersion): ReleaseBranch {
+    return new ReleaseBranch(version);
   }
 
   public toString(

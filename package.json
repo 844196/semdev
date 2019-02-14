@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc --project .",
+    "clean": "rm -rf build",
     "ci": "npm-run-all --parallel ci:*",
     "ci:type": "tsc --project . --noEmit",
     "ci:lint": "tslint --project . --format stylish",

@@ -1,7 +1,4 @@
-import { findLast } from 'fp-ts/lib/Array';
-import { Option } from 'fp-ts/lib/Option';
 import { Ord } from 'fp-ts/lib/Ord';
-import { toArray } from 'fp-ts/lib/Set';
 import * as semver from 'semver';
 import { ReleaseType } from './release-type';
 
@@ -15,14 +12,14 @@ export class Version {
   ) {}
 
   public static initial() {
-    return new Version(0, 0, 0, '', false);
+    return Version.wip(0, 0, 0);
   }
 
-  public static released(major: number, minor: number, patch: number, preRelease: string = '') {
-    return new Version(major, minor, patch, preRelease, true);
+  public static released(major: number, minor: number, patch: number, preRelease: string = ''): ReleasedVersion {
+    return new Version(major, minor, patch, preRelease, true) as ReleasedVersion;
   }
 
-  public static releasedFromString(str: VersionString): Version {
+  public static releasedFromString(str: VersionString) {
     return Version.released(
       semver.major(str),
       semver.minor(str),
@@ -31,11 +28,11 @@ export class Version {
     );
   }
 
-  public static wip(major: number, minor: number, patch: number) {
-    return new Version(major, minor, patch, '', false);
+  public static wip(major: number, minor: number, patch: number): WipVersion {
+    return new Version(major, minor, patch, '', false) as WipVersion;
   }
 
-  public static wipFromString(str: VersionString): Version {
+  public static wipFromString(str: VersionString) {
     return Version.wip(semver.major(str), semver.minor(str), semver.patch(str));
   }
 
@@ -46,11 +43,11 @@ export class Version {
   public increment(releaseType: ReleaseType) {
     switch (releaseType) {
       case ReleaseType.major:
-        return new Version(this.major + 1, 0, 0, '', false);
+        return Version.wip(this.major + 1, 0, 0);
       case ReleaseType.minor:
-        return new Version(this.major, this.minor + 1, 0, '', false);
+        return Version.wip(this.major, this.minor + 1, 0);
       case ReleaseType.patch:
-        return new Version(this.major, this.minor, this.patch + 1, '', false);
+        return Version.wip(this.major, this.minor, this.patch + 1);
     }
   }
 
@@ -86,5 +83,14 @@ export interface VersionStringerConfig {
   versionPrefix: string;
 }
 
-export const pickLatestReleased = (vs: Set<Version>): Option<Version> =>
-  findLast(toArray(ordVersion)(vs), (v) => v.released);
+export type WipVersion = Version & {
+  released: false;
+  wip: true;
+};
+export const isWipVersion = (x: Version): x is WipVersion => x.released === false && x.wip === true;
+
+export type ReleasedVersion = Version & {
+  released: true;
+  wip: false;
+};
+export const isReleasedVersion = (x: Version): x is ReleasedVersion => x.released === true && x.wip === false;

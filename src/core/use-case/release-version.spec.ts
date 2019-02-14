@@ -48,7 +48,7 @@ describe('ReleaseVersion', () => {
     port.latestVersion.mockReturnValue(fromEither(right(latestVersion)));
 
     const releaseVersion = Version.wip(1, 1, 0);
-    const expectedReleaseBranch = ReleaseBranch.of(releaseVersion).value as ReleaseBranch;
+    const expectedReleaseBranch = ReleaseBranch.of(releaseVersion);
 
     const rtn = await useCase.byVersion(releaseVersion).run();
 

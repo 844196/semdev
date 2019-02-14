@@ -1,7 +1,9 @@
-import { fromEither, TaskEither, taskEither } from 'fp-ts/lib/TaskEither';
+import { array } from 'fp-ts/lib/Array';
+import { sequence_ } from 'fp-ts/lib/Foldable2v';
+import { TaskEither, taskEitherSeq } from 'fp-ts/lib/TaskEither';
 import { CLIHookAction } from '../model/cli-hook-action';
 import { ReleaseBranch } from '../model/release-branch';
-import { Version } from '../model/version';
+import { Version, WipVersion } from '../model/version';
 import { NotifiablePort } from './notifiable-port';
 
 interface NotificationType {
@@ -16,30 +18,24 @@ export interface ReleaseVersionPort extends NotifiablePort<NotificationType> {
     post: CLIHookAction[];
   };
   latestVersion(): TaskEither<Error, Version>;
-  mergeBranch(branch: ReleaseBranch): TaskEither<Error, ReleaseBranch>;
-  createTag(version: Version): TaskEither<Error, Version>;
+  mergeBranch(branch: ReleaseBranch): TaskEither<Error, void>;
+  createTag(version: Version): TaskEither<Error, void>;
 }
 
 export class ReleaseVersion {
   public constructor(private readonly port: ReleaseVersionPort) {}
 
-  public byVersion(version: Version) {
-    const mergeBranch = fromEither(ReleaseBranch.of(version))
-      .chain(this.port.mergeBranch.bind(this.port))
-      .chain(this.port.notify.merged.bind(this.port));
+  public byVersion(targetVersion: WipVersion) {
+    const mergeBranch = (b: ReleaseBranch) => this.port.mergeBranch(b).chain(() => this.port.notify.merged(b));
+    const createTag = (v: Version) => this.port.createTag(v).chain(() => this.port.notify.tagged(v));
 
-    const createTag = this.port.createTag(version).chain(this.port.notify.tagged.bind(this.port));
-
-    const chainedHooks = (type: 'pre' | 'post') => (latest: Version) =>
-      this.port.hooks[type].reduce<TaskEither<Error, void>>(
-        (acc, next) => acc.chain(() => this.port.notify.runHook(next)).chain(() => next.build(version, latest)),
-        taskEither.of(undefined),
-      );
-
-    return this.port
-      .latestVersion()
-      .chain((latest) => chainedHooks('pre')(latest).map(() => latest))
-      .chainFirst(mergeBranch.chainFirst(createTag))
-      .chain((latest) => chainedHooks('post')(latest));
+    return this.port.latestVersion().chain((prevVersion) => {
+      const sequenceHook = (type: 'pre' | 'post') =>
+        sequence_(taskEitherSeq, array)(this.port.hooks[type].map((h) => h.build(targetVersion, prevVersion)));
+      return sequenceHook('pre')
+        .chain(() => mergeBranch(ReleaseBranch.of(targetVersion)))
+        .chain(() => createTag(targetVersion))
+        .chain(() => sequenceHook('post'));
+    });
   }
 }

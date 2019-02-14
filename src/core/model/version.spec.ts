@@ -1,5 +1,5 @@
 import { ReleaseType } from './release-type';
-import { ordVersion, Version, VersionString } from './version';
+import { isReleasedVersion, isVersionString, isWipVersion, ordVersion, Version, VersionString } from './version';
 
 describe('Version', () => {
   it('initial()', () => {
@@ -7,8 +7,8 @@ describe('Version', () => {
     expect(v000.major).toBe(0);
     expect(v000.minor).toBe(0);
     expect(v000.patch).toBe(0);
-    expect(v000.preRelease).toBe('');
-    expect(v000.wip).toBe(true);
+    expect(isWipVersion(v000)).toBeTruthy();
+    expect(isReleasedVersion(v000)).toBeFalsy();
   });
 
   describe('released()', () => {
@@ -18,7 +18,8 @@ describe('Version', () => {
       expect(v123.minor).toBe(2);
       expect(v123.patch).toBe(3);
       expect(v123.preRelease).toBe('');
-      expect(v123.wip).toBe(false);
+      expect(isWipVersion(v123)).toBeFalsy();
+      expect(isReleasedVersion(v123)).toBeTruthy();
     });
 
     it('pre', () => {
@@ -27,7 +28,8 @@ describe('Version', () => {
       expect(v123.minor).toBe(2);
       expect(v123.patch).toBe(3);
       expect(v123.preRelease).toBe('alpha.1');
-      expect(v123.wip).toBe(false);
+      expect(isWipVersion(v123)).toBeFalsy();
+      expect(isReleasedVersion(v123)).toBeTruthy();
     });
   });
 
@@ -53,7 +55,8 @@ describe('Version', () => {
     expect(v124Wip.minor).toBe(2);
     expect(v124Wip.patch).toBe(4);
     expect(v124Wip.preRelease).toBe('');
-    expect(v124Wip.wip).toBe(true);
+    expect(isWipVersion(v124Wip)).toBeTruthy();
+    expect(isReleasedVersion(v124Wip)).toBeFalsy();
   });
 
   it('wipFromString()', () => {
@@ -99,12 +102,14 @@ describe('Version', () => {
 describe('ordVersion', () => {
   const a = () => Version.wip(1, 2, 3);
   const b = () => Version.wip(1, 2, 4);
+  const c = () => Version.released(1, 0, 0);
 
   it('equals()', () => {
-    expect(ordVersion.equals(a(), a())).toBe(true);
-    expect(ordVersion.equals(a(), b())).toBe(false);
-    expect(ordVersion.equals(b(), a())).toBe(false);
-    expect(ordVersion.equals(b(), b())).toBe(true);
+    expect(ordVersion.equals(a(), a())).toBeTruthy();
+    expect(ordVersion.equals(a(), b())).toBeFalsy();
+    expect(ordVersion.equals(b(), a())).toBeFalsy();
+    expect(ordVersion.equals(b(), b())).toBeTruthy();
+    expect(ordVersion.equals(b(), c())).toBeFalsy();
   });
 
   it('compare()', () => {
@@ -113,4 +118,27 @@ describe('ordVersion', () => {
     expect(ordVersion.compare(b(), a())).toBe(1);
     expect(ordVersion.compare(b(), b())).toBe(0);
   });
+});
+
+describe('isVersionString()', () => {
+  it('valid', () => {
+    expect(isVersionString('1.2.3')).toBeTruthy();
+    expect(isVersionString('v1.2.3')).toBeTruthy();
+    expect(isVersionString('1.2.3-alpha.1')).toBeTruthy();
+    expect(isVersionString('v1.2.3-alpha.1')).toBeTruthy();
+  });
+
+  it('invalid', () => {
+    expect(isVersionString('aaa')).toBeFalsy();
+  });
+});
+
+it('isWipVersion()', () => {
+  expect(isWipVersion(Version.wip(1, 0, 0))).toBeTruthy();
+  expect(isWipVersion(Version.released(1, 0, 0))).toBeFalsy();
+});
+
+it('isReleasedVersion()', () => {
+  expect(isReleasedVersion(Version.wip(1, 0, 0))).toBeFalsy();
+  expect(isReleasedVersion(Version.released(1, 0, 0))).toBeTruthy();
 });

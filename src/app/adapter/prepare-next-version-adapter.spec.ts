@@ -1,66 +1,55 @@
+import { right } from 'fp-ts/lib/Either';
 import { IO } from 'fp-ts/lib/IO';
-import { SimpleGit } from 'simple-git/promise';
+import { fromEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { Version } from '../../core/model/version';
-import { Config } from '../config';
+import { encode } from '../config';
+import { Git } from '../shim/git';
 import { Logger } from '../shim/logger';
 import { PrepareNextVersionAdapter } from './prepare-next-version-adapter';
 
-const config: Config = {
+const config = encode({
   versionPrefix: 'v',
   releaseBranchPrefix: 'release/',
   masterBranch: 'master',
-};
-let simpleGit: jest.Mocked<SimpleGit>;
+});
+let git: jest.Mocked<Git>;
 let adapter: PrepareNextVersionAdapter;
 let logger: jest.Mocked<Logger>;
 
 beforeEach(() => {
-  simpleGit = jest.fn(
-    (): Pick<SimpleGit, 'branchLocal' | 'tags' | 'checkoutBranch'> => {
+  git = jest.fn(
+    (): Pick<Git, 'tags' | 'createBranch'> => {
       return {
-        branchLocal: jest.fn(),
         tags: jest.fn(),
-        checkoutBranch: jest.fn(),
+        createBranch: jest.fn(() => fromEither(right(undefined))),
       };
     },
   )();
-  logger = jest.fn(() => {
-    return {
-      info: () => new IO(() => undefined),
-      success: () => new IO(() => undefined),
-      error: () => new IO(() => undefined),
-    };
-  })();
-  adapter = new PrepareNextVersionAdapter(config, simpleGit, logger);
+  logger = jest.fn((): Logger => ({ log: jest.fn(() => new IO(() => undefined)) }))();
+  adapter = new PrepareNextVersionAdapter(config, git, logger);
 });
 
 describe('PrepareNextVersionAdapter', () => {
-  it('fetchAllVersion()', async () => {
-    simpleGit.branchLocal.mockResolvedValue({
-      all: ['master', 'release/v1.1.0', 'release/v2.0.0', 'release/v2.0.0/feature/design-renewal'],
+  describe('notify', () => {
+    it('detectedLatest()', async () => {
+      await adapter.notify.detectedLatest(Version.wip(1, 0, 0));
+      expect(logger.log).toBeCalledWith('info', 'detected latest version: v1.0.0');
     });
-    simpleGit.tags.mockResolvedValue({ all: ['v1.0.0', 'v1.0.1-alpha.1', 'v1.0.1'] });
 
-    const rtn = await adapter.fetchAllVersion().run();
-    expect(rtn.value).toEqual(
-      new Set([
-        Version.wip(1, 1, 0),
-        Version.wip(2, 0, 0),
-        Version.released(1, 0, 0),
-        Version.released(1, 0, 1, 'alpha.1'),
-        Version.released(1, 0, 1),
-      ]),
-    );
-    expect(simpleGit.branchLocal).toHaveBeenCalled();
-    expect(simpleGit.tags).toHaveBeenCalled();
+    it('computedNext()', async () => {
+      await adapter.notify.computedNext(Version.wip(1, 0, 1));
+      expect(logger.log).toBeCalledWith('info', 'compute next version: v1.0.1');
+    });
+
+    it('createdBranch()', async () => {
+      await adapter.notify.createdBranch(ReleaseBranch.of(Version.wip(1, 0, 1)));
+      expect(logger.log).toBeCalledWith('success', 'create development branch: release/v1.0.1');
+    });
   });
 
-  it('checkoutBranch()', async () => {
-    simpleGit.checkoutBranch.mockResolvedValue(undefined);
-
-    const rtn = await adapter.checkoutBranch(ReleaseBranch.of(Version.wip(1, 1, 0)).value as ReleaseBranch).run();
-    expect(rtn.value).toEqual(ReleaseBranch.of(Version.wip(1, 1, 0)).value as ReleaseBranch);
-    expect(simpleGit.checkoutBranch).toHaveBeenCalledWith('release/v1.1.0', 'master');
+  it('createBranch()', async () => {
+    await adapter.createBranch(ReleaseBranch.of(Version.wip(1, 1, 0))).run();
+    expect(git.createBranch).toHaveBeenCalledWith('release/v1.1.0', 'master');
   });
 });

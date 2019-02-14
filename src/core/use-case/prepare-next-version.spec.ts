@@ -12,8 +12,8 @@ beforeEach(() => {
   port = jest.fn(
     (): PrepareNextVersionPort => {
       return {
-        fetchAllVersion: jest.fn(),
-        checkoutBranch: jest.fn((a) => fromEither(right(a))),
+        latestVersion: jest.fn(),
+        createBranch: jest.fn(() => fromEither(right(undefined))),
         notify: {
           detectedLatest: jest.fn((a) => fromEither(right(a))),
           computedNext: jest.fn((a) => fromEither(right(a))),
@@ -26,43 +26,24 @@ beforeEach(() => {
 });
 
 describe('PrepareNextVersion', () => {
-  describe('byReleaseType()', () => {
-    it('success1', async () => {
-      const versions = [
-        Version.released(1, 0, 2),
-        Version.released(1, 2, 1),
-        Version.released(1, 0, 0),
-        Version.wip(2, 0, 0),
-        Version.released(1, 0, 1),
-        Version.released(1, 2, 0),
-      ];
-      const releaseType = ReleaseType.patch;
+  it('byReleaseType()', async () => {
+    const releaseType = ReleaseType.patch;
 
-      port.fetchAllVersion.mockReturnValue(fromEither(right(new Set(versions))));
+    port.latestVersion.mockReturnValue(fromEither(right(Version.released(1, 2, 1))));
 
-      const rtn = await useCase.byReleaseType(releaseType).run();
-      expect(rtn.isRight()).toBeTruthy();
-      expect(port.fetchAllVersion).toHaveBeenCalled();
-      expect(port.checkoutBranch).toHaveBeenCalledWith(ReleaseBranch.of(Version.wip(1, 2, 2)).value as ReleaseBranch);
-    });
-
-    it('success2', async () => {
-      port.fetchAllVersion.mockReturnValue(fromEither(right(new Set())));
-
-      const rtn = await useCase.byReleaseType(ReleaseType.minor).run();
-      expect(rtn.isRight()).toBeTruthy();
-      expect(port.fetchAllVersion).toHaveBeenCalled();
-      expect(port.checkoutBranch).toHaveBeenCalledWith(ReleaseBranch.of(Version.wip(0, 1, 0)).value as ReleaseBranch);
-    });
+    const rtn = await useCase.byReleaseType(releaseType).run();
+    expect(rtn.isRight()).toBeTruthy();
+    expect(port.latestVersion).toHaveBeenCalled();
+    expect(port.createBranch).toHaveBeenCalledWith(ReleaseBranch.of(Version.wip(1, 2, 2)));
   });
 
   it('byVersion()', async () => {
     const version = Version.wip(1, 0, 0);
-    const expectedReleaseBranch = ReleaseBranch.of(version).value as ReleaseBranch;
+    const expectedReleaseBranch = ReleaseBranch.of(version);
 
     const rtn = await useCase.byVersion(version).run();
 
     expect(rtn.isRight).toBeTruthy();
-    expect(port.checkoutBranch).toHaveBeenCalledWith(expectedReleaseBranch);
+    expect(port.createBranch).toHaveBeenCalledWith(expectedReleaseBranch);
   });
 });

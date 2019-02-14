@@ -18,7 +18,7 @@ export abstract class Base<Deps extends {}, Args extends string[] = [], Opts ext
         .run()
         .then((res) => (res.isRight() ? Promise.resolve(res.value) : Promise.reject(res.value)));
     } catch (err) {
-      this.deps.logger.error(err).run();
+      this.deps.logger.log('error', err).run();
       return 1;
     }
     return 0;

@@ -4,15 +4,16 @@ const cli = require('cac')();
 const cosmiconfig = require('cosmiconfig');
 const signale = require('signale');
 const simpleGit = require('simple-git/promise');
+const { SimpleGitClient } = require('../build/app/shim/git');
 const { SignaleLogger } = require('../build/app/shim/logger');
-const { defaultConfig } = require('../build/app/config');
+const { defaultConfig, encode } = require('../build/app/config');
 const { PrepareCommand } = require('../build/app/command/prepare');
 const { ReleaseCommand } = require('../build/app/command/release');
 
 const found = cosmiconfig('semdev').searchSync();
-const config = found ? found.config : defaultConfig;
+const config = found ? encode(found.config) : defaultConfig;
 
-const git = simpleGit().silent(true);
+const git = new SimpleGitClient(simpleGit().silent(true));
 
 const logger = new SignaleLogger(signale);
 

@@ -1,7 +1,7 @@
-import { fromEither, TaskEither } from 'fp-ts/lib/TaskEither';
+import { TaskEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
-import { pickLatestReleased, Version } from '../model/version';
+import { Version, WipVersion } from '../model/version';
 import { NotifiablePort } from './notifiable-port';
 
 interface NotificationType {
@@ -11,8 +11,8 @@ interface NotificationType {
 }
 
 export interface PrepareNextVersionPort extends NotifiablePort<NotificationType> {
-  fetchAllVersion(): TaskEither<Error, Set<Version>>;
-  checkoutBranch(branch: ReleaseBranch): TaskEither<Error, ReleaseBranch>;
+  latestVersion(): TaskEither<Error, Version>;
+  createBranch(branch: ReleaseBranch): TaskEither<Error, void>;
 }
 
 export class PrepareNextVersion {
@@ -20,8 +20,7 @@ export class PrepareNextVersion {
 
   public byReleaseType(releaseType: ReleaseType) {
     const detectLatestVersion = this.port
-      .fetchAllVersion()
-      .map((vers) => pickLatestReleased(vers).getOrElse(Version.initial()))
+      .latestVersion()
       .chain((latest) => this.port.notify.detectedLatest(latest).map(() => latest));
 
     const computeNextVersion = detectLatestVersion
@@ -30,16 +29,13 @@ export class PrepareNextVersion {
 
     const checkoutBranch = computeNextVersion
       .map(ReleaseBranch.of)
-      .chain(fromEither)
-      .chain((branch) => this.port.checkoutBranch(branch))
-      .chain((branch) => this.port.notify.createdBranch(branch));
+      .chain((branch) => this.port.createBranch(branch).chain(() => this.port.notify.createdBranch(branch)));
 
     return checkoutBranch;
   }
 
-  public byVersion(version: Version) {
-    return fromEither(ReleaseBranch.of(version))
-      .chain((branch) => this.port.checkoutBranch(branch))
-      .chain((branch) => this.port.notify.createdBranch(branch));
+  public byVersion(version: WipVersion) {
+    const branch = ReleaseBranch.of(version);
+    return this.port.createBranch(branch).chain(() => this.port.notify.createdBranch(branch));
   }
 }
