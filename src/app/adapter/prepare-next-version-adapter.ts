@@ -1,9 +1,9 @@
-import { Either, toError } from 'fp-ts/lib/Either';
+import { toError } from 'fp-ts/lib/Either';
 import { insert, union } from 'fp-ts/lib/Set';
 import { fromIO, tryCatch } from 'fp-ts/lib/TaskEither';
 import { SimpleGit } from 'simple-git/promise';
 import { ReleaseBranch } from '../../core/model/release-branch';
-import { ordVersion, Version } from '../../core/model/version';
+import { isVersionString, ordVersion, Version } from '../../core/model/version';
 import { PrepareNextVersionPort } from '../../core/use-case/prepare-next-version';
 import { Config, toStringerConfig } from '../config';
 import { Logger } from '../shim/logger';
@@ -24,22 +24,20 @@ export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
   ) {}
 
   public fetchAllVersion() {
-    const verIntoSet = (v: Either<Error, Version>, vs: Set<Version>) =>
-      v.isRight() ? insert(ordVersion)(v.value, vs) : vs;
     const releasedVersions = tryCatch(() => this.repository.tags(), toError)
       .map(({ all }) => all)
       .map((tags) =>
         tags
-          .filter(Version.validString)
-          .reduce((xs, x) => verIntoSet(Version.releasedFromString(x), xs), new Set<Version>()),
+          .filter(isVersionString)
+          .reduce((xs, x) => insert(ordVersion)(Version.releasedFromString(x), xs), new Set<Version>()),
       );
     const wipVersions = tryCatch(() => this.repository.branchLocal(), toError)
       .map(({ all }) => all)
       .map((branches) =>
         branches
           .map((x) => x.replace(new RegExp(String.raw`^${this.config.releaseBranchPrefix}`), ''))
-          .filter(Version.validString)
-          .reduce((xs, x) => verIntoSet(Version.wipFromString(x), xs), new Set<Version>()),
+          .filter(isVersionString)
+          .reduce((xs, x) => insert(ordVersion)(Version.wipFromString(x), xs), new Set<Version>()),
       );
     return releasedVersions.chain((x) => wipVersions.map((y) => union(ordVersion)(x, y)));
   }

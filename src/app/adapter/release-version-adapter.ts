@@ -1,14 +1,13 @@
 import { spawn } from 'child_process';
-import { findLast, mapOption } from 'fp-ts/lib/Array';
+import { mapOption } from 'fp-ts/lib/Array';
 import { toError } from 'fp-ts/lib/Either';
 import { fromNullable } from 'fp-ts/lib/Option';
 import { lookup } from 'fp-ts/lib/Record';
-import { insert, toArray } from 'fp-ts/lib/Set';
 import { fromIO, tryCatch } from 'fp-ts/lib/TaskEither';
 import { SimpleGit } from 'simple-git/promise';
 import { CLIHookAction } from '../../core/model/cli-hook-action';
 import { ReleaseBranch } from '../../core/model/release-branch';
-import { ordVersion, Version } from '../../core/model/version';
+import { isVersionString, pickLatestReleased, Version } from '../../core/model/version';
 import { ReleaseVersionPort } from '../../core/use-case/release-version';
 import { Config, toStringerConfig } from '../config';
 import { Logger } from '../shim/logger';
@@ -49,16 +48,10 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
   }
 
   public latestVersion() {
-    return tryCatch(() => this.repository.tags(), toError)
-      .map(({ all }) => all)
-      .map((tags) =>
-        tags.filter(Version.validString).reduce((xs, x) => {
-          const v = Version.releasedFromString(x);
-          return v.isRight() ? insert(ordVersion)(v.value, xs) : xs;
-        }, new Set<Version>()),
-      )
-      .map(toArray(ordVersion))
-      .map((xs) => findLast(xs, (x) => x.released).getOrElse(Version.initial()));
+    return tryCatch(() => this.repository.tags(), toError).map(({ all: tags }) => {
+      const vers = new Set(tags.filter(isVersionString).map(Version.releasedFromString));
+      return pickLatestReleased(vers).getOrElse(Version.initial());
+    });
   }
 
   public mergeBranch(branch: ReleaseBranch) {

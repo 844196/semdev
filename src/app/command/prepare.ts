@@ -3,7 +3,7 @@ import { IO } from 'fp-ts/lib/IO';
 import { fromEither } from 'fp-ts/lib/TaskEither';
 import { SimpleGit } from 'simple-git/promise';
 import { isReleaseType } from '../../core/model/release-type';
-import { Version } from '../../core/model/version';
+import { isVersionString, Version } from '../../core/model/version';
 import { PrepareNextVersion } from '../../core/use-case/prepare-next-version';
 import { PrepareNextVersionAdapter } from '../adapter/prepare-next-version-adapter';
 import { Base } from './base';
@@ -25,9 +25,8 @@ export class PrepareCommand extends Base<{ git: SimpleGit }, [string], { verbose
       return useCase.byReleaseType(releaseTypeOrVersionStr);
     }
 
-    const version = Version.wipFromString(releaseTypeOrVersionStr);
-    if (version.isRight()) {
-      return useCase.byVersion(version.value);
+    if (isVersionString(releaseTypeOrVersionStr)) {
+      return useCase.byVersion(Version.wipFromString(releaseTypeOrVersionStr));
     }
 
     return fromEither(left(new Error(`invalid release type or version given: ${releaseTypeOrVersionStr}`)));

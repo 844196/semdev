@@ -1,9 +1,7 @@
-import { findLast } from 'fp-ts/lib/Array';
-import { toArray } from 'fp-ts/lib/Set';
 import { fromEither, TaskEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
-import { ordVersion, Version } from '../model/version';
+import { pickLatestReleased, Version } from '../model/version';
 import { NotifiablePort } from './notifiable-port';
 
 interface NotificationType {
@@ -23,8 +21,7 @@ export class PrepareNextVersion {
   public byReleaseType(releaseType: ReleaseType) {
     const detectLatestVersion = this.port
       .fetchAllVersion()
-      .map(toArray(ordVersion))
-      .map((vers) => findLast(vers, (ver) => ver.released).getOrElse(Version.initial()))
+      .map((vers) => pickLatestReleased(vers).getOrElse(Version.initial()))
       .chain((latest) => this.port.notify.detectedLatest(latest).map(() => latest));
 
     const computeNextVersion = detectLatestVersion

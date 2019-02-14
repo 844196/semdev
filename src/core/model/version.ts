@@ -1,5 +1,7 @@
-import { Either, left, right } from 'fp-ts/lib/Either';
+import { findLast } from 'fp-ts/lib/Array';
+import { Option } from 'fp-ts/lib/Option';
 import { Ord } from 'fp-ts/lib/Ord';
+import { toArray } from 'fp-ts/lib/Set';
 import * as semver from 'semver';
 import { ReleaseType } from './release-type';
 
@@ -12,10 +14,6 @@ export class Version {
     public readonly released: boolean,
   ) {}
 
-  public static validString(str: string) {
-    return semver.valid(str) !== null;
-  }
-
   public static initial() {
     return new Version(0, 0, 0, '', false);
   }
@@ -24,27 +22,21 @@ export class Version {
     return new Version(major, minor, patch, preRelease, true);
   }
 
-  public static releasedFromString(str: string): Either<Error, Version> {
-    return Version.validString(str)
-      ? right(
-          Version.released(
-            semver.major(str),
-            semver.minor(str),
-            semver.patch(str),
-            (semver.prerelease(str) || []).join('.'),
-          ),
-        )
-      : left(new Error(`invalid version string given: ${str}`));
+  public static releasedFromString(str: VersionString): Version {
+    return Version.released(
+      semver.major(str),
+      semver.minor(str),
+      semver.patch(str),
+      (semver.prerelease(str) || []).join('.'),
+    );
   }
 
   public static wip(major: number, minor: number, patch: number) {
     return new Version(major, minor, patch, '', false);
   }
 
-  public static wipFromString(str: string): Either<Error, Version> {
-    return Version.validString(str)
-      ? right(Version.wip(semver.major(str), semver.minor(str), semver.patch(str)))
-      : left(new Error(`invalid version string given: ${str}`));
+  public static wipFromString(str: VersionString): Version {
+    return Version.wip(semver.major(str), semver.minor(str), semver.patch(str));
   }
 
   public get wip() {
@@ -73,10 +65,10 @@ export class Version {
     return semver.gt(this.toString(), other.toString());
   }
 
-  public toString({ versionPrefix }: VersionStringerConfig = { versionPrefix: '' }) {
+  public toString({ versionPrefix }: VersionStringerConfig = { versionPrefix: '' }): VersionString {
     return `${versionPrefix}${this.major}.${this.minor}.${this.patch}${
       this.preRelease.length > 0 ? `-${this.preRelease}` : ''
-    }`;
+    }` as VersionString;
   }
 }
 
@@ -85,6 +77,14 @@ export const ordVersion: Ord<Version> = {
   compare: (x, y) => (x.equals(y) ? 0 : x.greaterThan(y) ? 1 : -1),
 };
 
+// see: https://basarat.gitbooks.io/typescript/docs/tips/nominalTyping.html
+enum VersionStringBrand {}
+export type VersionString = string & VersionStringBrand;
+export const isVersionString = (x: string): x is VersionString => semver.valid(x) !== null;
+
 export interface VersionStringerConfig {
   versionPrefix: string;
 }
+
+export const pickLatestReleased = (vs: Set<Version>): Option<Version> =>
+  findLast(toArray(ordVersion)(vs), (v) => v.released);
