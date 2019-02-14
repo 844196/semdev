@@ -1,3 +1,4 @@
+import { constant } from 'fp-ts/lib/function';
 import { TaskEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
@@ -19,19 +20,16 @@ export class PrepareNextVersion {
   public constructor(private readonly port: PrepareNextVersionPort) {}
 
   public byReleaseType(releaseType: ReleaseType) {
-    const detectLatestVersion = this.port
-      .latestVersion()
-      .chain((latest) => this.port.notify.detectedLatest(latest).map(() => latest));
+    const detectLatestVersion = () =>
+      this.port.latestVersion().chain((latest) => this.port.notify.detectedLatest(latest).map(constant(latest)));
+    const computeNextVersion = (latest: Version) => {
+      const next = latest.increment(releaseType);
+      return this.port.notify.computedNext(next).map(constant(next));
+    };
 
-    const computeNextVersion = detectLatestVersion
-      .map((latest) => latest.increment(releaseType))
-      .chain((latest) => this.port.notify.computedNext(latest).map(() => latest));
-
-    const checkoutBranch = computeNextVersion
-      .map(ReleaseBranch.of)
-      .chain((branch) => this.port.createBranch(branch).chain(() => this.port.notify.createdBranch(branch)));
-
-    return checkoutBranch;
+    return detectLatestVersion()
+      .chain(computeNextVersion)
+      .chain((next) => this.byVersion(next));
   }
 
   public byVersion(version: WipVersion) {

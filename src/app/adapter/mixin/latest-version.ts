@@ -6,7 +6,7 @@ import { isReleasedVersion, isVersionString, ordVersion, Version } from '../../.
 
 const pickLatestReleased = (vs: Set<Version>) => findLast(toArray(ordVersion)(vs), isReleasedVersion);
 
-export const latestVersion = (tags: () => TaskEither<Error, Set<string>>) => (): TaskEither<Error, Version> =>
+export const latestVersion = <L>(tags: () => TaskEither<L, Set<string>>) => (): TaskEither<L, Version> =>
   tags().map((ts) => {
     const vs = map(ordVersion)(filter(ts, isVersionString), Version.releasedFromString);
     return pickLatestReleased(vs).fold<Version>(Version.initial(), identity);
