@@ -11,13 +11,13 @@ interface NotificationType {
   createdBranch: ReleaseBranch;
 }
 
-export interface PrepareNextVersionPort extends NotifiablePort<NotificationType> {
+export interface PrepareVersionPort extends NotifiablePort<NotificationType> {
   latestVersion(): TaskEither<Error, Version>;
   createBranch(branch: ReleaseBranch): TaskEither<Error, void>;
 }
 
-export class PrepareNextVersion {
-  public constructor(private readonly port: PrepareNextVersionPort) {}
+export class PrepareVersion {
+  public constructor(private readonly port: PrepareVersionPort) {}
 
   public byReleaseType(releaseType: ReleaseType) {
     const detectLatestVersion = () =>

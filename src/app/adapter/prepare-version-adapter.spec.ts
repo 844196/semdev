@@ -6,7 +6,7 @@ import { Version } from '../../core/model/version';
 import { encode } from '../config';
 import { Git } from '../shim/git';
 import { Logger } from '../shim/logger';
-import { PrepareNextVersionAdapter } from './prepare-next-version-adapter';
+import { PrepareVersionAdapter } from './prepare-version-adapter';
 
 const config = encode({
   versionPrefix: 'v',
@@ -14,7 +14,7 @@ const config = encode({
   masterBranch: 'master',
 });
 let git: jest.Mocked<Git>;
-let adapter: PrepareNextVersionAdapter;
+let adapter: PrepareVersionAdapter;
 let logger: jest.Mocked<Logger>;
 
 beforeEach(() => {
@@ -27,10 +27,10 @@ beforeEach(() => {
     },
   )();
   logger = jest.fn((): Logger => ({ log: jest.fn(() => new IO(() => undefined)) }))();
-  adapter = new PrepareNextVersionAdapter(config, git, logger);
+  adapter = new PrepareVersionAdapter(config, git, logger);
 });
 
-describe('PrepareNextVersionAdapter', () => {
+describe('PrepareVersionAdapter', () => {
   describe('notify', () => {
     it('detectedLatest()', async () => {
       await adapter.notify.detectedLatest(Version.wip(1, 0, 0));

@@ -3,14 +3,14 @@ import { fromEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
 import { Version } from '../model/version';
-import { PrepareNextVersion, PrepareNextVersionPort } from './prepare-next-version';
+import { PrepareVersion, PrepareVersionPort } from './prepare-version';
 
-let port: jest.Mocked<PrepareNextVersionPort>;
-let useCase: PrepareNextVersion;
+let port: jest.Mocked<PrepareVersionPort>;
+let useCase: PrepareVersion;
 
 beforeEach(() => {
   port = jest.fn(
-    (): PrepareNextVersionPort => {
+    (): PrepareVersionPort => {
       return {
         latestVersion: jest.fn(),
         createBranch: jest.fn(() => fromEither(right(undefined))),
@@ -22,10 +22,10 @@ beforeEach(() => {
       };
     },
   )();
-  useCase = new PrepareNextVersion(port);
+  useCase = new PrepareVersion(port);
 });
 
-describe('PrepareNextVersion', () => {
+describe('PrepareVersion', () => {
   it('byReleaseType()', async () => {
     const releaseType = ReleaseType.patch;
 

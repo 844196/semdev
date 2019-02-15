@@ -1,13 +1,13 @@
 import { fromIO } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../../core/model/release-branch';
-import { PrepareNextVersionPort } from '../../core/use-case/prepare-next-version';
+import { PrepareVersionPort } from '../../core/use-case/prepare-version';
 import { Config, toStringerConfig } from '../config';
 import { Git } from '../shim/git';
 import { Logger } from '../shim/logger';
 import { latestVersion } from './mixin/latest-version';
 
-export class PrepareNextVersionAdapter implements PrepareNextVersionPort {
-  public readonly notify: PrepareNextVersionPort['notify'] = {
+export class PrepareVersionAdapter implements PrepareVersionPort {
+  public readonly notify: PrepareVersionPort['notify'] = {
     detectedLatest: (x) =>
       fromIO(this.logger.log('info', `detected latest version: ${x.toString(toStringerConfig(this.config))}`)),
     computedNext: (x) =>
