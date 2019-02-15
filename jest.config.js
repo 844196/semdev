@@ -14,6 +14,7 @@ module.exports = {
   coveragePathIgnorePatterns: [
     '/node_modules/',
     'src/app/config.ts',
+    'src/app/cli.ts',
     'src/app/command/',
   ],
 }
