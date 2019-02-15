@@ -1,12 +1,11 @@
 import { right } from 'fp-ts/lib/Either';
-import { IO } from 'fp-ts/lib/IO';
 import { fromEither } from 'fp-ts/lib/TaskEither';
-import { CLIHookAction, CommandRunner } from '../../core/model/cli-hook-action';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { Version } from '../../core/model/version';
 import { encode } from '../config';
+import { CommandRunner } from '../shim/command-runner';
 import { Git } from '../shim/git';
-import { Logger } from '../shim/logger';
+import { EmptyLogger, Logger } from '../shim/logger';
 import { ReleaseVersionAdapter } from './release-version-adapter';
 
 const config = encode({
@@ -21,7 +20,7 @@ const config = encode({
   },
 });
 let git: jest.Mocked<Git>;
-let logger: jest.Mocked<Logger>;
+let logger: Logger;
 let commandRunner: jest.Mocked<CommandRunner>;
 let adapter: ReleaseVersionAdapter;
 
@@ -36,7 +35,8 @@ beforeEach(() => {
       };
     },
   )();
-  logger = jest.fn((): Logger => ({ log: jest.fn(() => new IO(() => undefined)) }))();
+  logger = new EmptyLogger();
+  jest.spyOn(logger, 'log');
   commandRunner = jest.fn()();
   adapter = new ReleaseVersionAdapter(config, git, logger, commandRunner);
 });
@@ -51,21 +51,6 @@ describe('ReleaseVersionAdapter', () => {
     it('tagged()', async () => {
       await adapter.notify.tagged(Version.wip(1, 2, 3));
       expect(logger.log).toBeCalledWith('success', 'tag created: v1.2.3');
-    });
-
-    it('runHook()', async () => {
-      await adapter.notify.runHook(jest.fn<CLIHookAction>(() => ({ inspect: () => 'pwd' }))());
-      expect(logger.log).toBeCalledWith('await', 'run: pwd');
-    });
-  });
-
-  describe('hooks', () => {
-    it('pre', () => {
-      expect(adapter.hooks.pre[0].inspect()).toBe('pwd');
-    });
-
-    it('post', () => {
-      expect(adapter.hooks.post[0].inspect()).toBe('ls');
     });
   });
 

@@ -1,7 +1,4 @@
-import { array } from 'fp-ts/lib/Array';
-import { sequence_ } from 'fp-ts/lib/Foldable2v';
-import { TaskEither, taskEitherSeq } from 'fp-ts/lib/TaskEither';
-import { CLIHookAction } from '../model/cli-hook-action';
+import { TaskEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { Version, WipVersion } from '../model/version';
 import { NotifiablePort } from './notifiable-port';
@@ -9,14 +6,10 @@ import { NotifiablePort } from './notifiable-port';
 interface NotificationType {
   merged: ReleaseBranch;
   tagged: Version;
-  runHook: CLIHookAction;
 }
 
 export interface ReleaseVersionPort extends NotifiablePort<NotificationType> {
-  hooks: {
-    pre: CLIHookAction[];
-    post: CLIHookAction[];
-  };
+  runHooks(timing: 'pre' | 'post', next: Version, prev: Version): TaskEither<Error, void>;
   latestVersion(): TaskEither<Error, Version>;
   mergeBranch(branch: ReleaseBranch): TaskEither<Error, void>;
   createTag(version: Version): TaskEither<Error, void>;
@@ -30,16 +23,11 @@ export class ReleaseVersion {
     const createTag = (v: Version) => this.port.createTag(v).chain(() => this.port.notify.tagged(v));
 
     return this.port.latestVersion().chain((prevVersion) => {
-      const sequenceHook = (type: 'pre' | 'post') =>
-        sequence_(taskEitherSeq, array)(
-          this.port.hooks[type].map((h) =>
-            this.port.notify.runHook(h).chain(() => h.build(targetVersion, prevVersion)),
-          ),
-        );
-      return sequenceHook('pre')
+      return this.port
+        .runHooks('pre', targetVersion, prevVersion)
         .chain(() => mergeBranch(ReleaseBranch.of(targetVersion)))
         .chain(() => createTag(targetVersion))
-        .chain(() => sequenceHook('post'));
+        .chain(() => this.port.runHooks('post', targetVersion, prevVersion));
     });
   }
 }

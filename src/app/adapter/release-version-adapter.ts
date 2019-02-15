@@ -1,20 +1,19 @@
-import { reduceWithKey } from 'fp-ts/lib/Record';
-import { fromIO } from 'fp-ts/lib/TaskEither';
-import { CLIHookAction, CommandRunner } from '../../core/model/cli-hook-action';
+import { array } from 'fp-ts/lib/Array';
+import { sequence_ } from 'fp-ts/lib/Foldable2v';
+import { fromIO, taskEitherSeq } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { Version } from '../../core/model/version';
 import { ReleaseVersionPort } from '../../core/use-case/release-version';
 import { Config, toStringerConfig } from '../config';
+import { CommandRunner } from '../shim/command-runner';
 import { Git } from '../shim/git';
 import { Logger } from '../shim/logger';
 import { latestVersion } from './mixin/latest-version';
 
 export class ReleaseVersionAdapter implements ReleaseVersionPort {
-  public readonly hooks: ReleaseVersionPort['hooks'] = { pre: [], post: [] };
   public readonly notify: ReleaseVersionPort['notify'] = {
     merged: (x) => fromIO(this.logger.log('success', `merged: ${x.toString(toStringerConfig(this.config))}`)),
     tagged: (x) => fromIO(this.logger.log('success', `tag created: ${x.toString(toStringerConfig(this.config))}`)),
-    runHook: (x) => fromIO(this.logger.log('await', `run: ${x.inspect()}`)),
   };
 
   public constructor(
@@ -22,12 +21,7 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
     private readonly git: Git,
     private readonly logger: Logger,
     private readonly commandRunner: CommandRunner,
-  ) {
-    this.hooks = reduceWithKey(this.config.hooks.release, { ...this.hooks }, (type, hooks, cmds) => {
-      hooks[type] = cmds.map((cmd) => new CLIHookAction(cmd, this.commandRunner, this.config.versionPrefix));
-      return hooks;
-    });
-  }
+  ) {}
 
   public latestVersion = latestVersion(this.git.tags.bind(this.git));
 
@@ -42,5 +36,18 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
       .checkout(this.config.masterBranch)
       .chain(() => this.git.createTag(version.toString(toStringerConfig(this.config))))
       .map((): void => undefined);
+  }
+
+  public runHooks(timing: 'pre' | 'post', next: Version, prev: Version) {
+    const env = {
+      NEXT_VERSION: next.toString(toStringerConfig(this.config)),
+      PREV_VERSION: prev.toString(toStringerConfig(this.config)),
+    };
+    const hooks = this.config.hooks.release[timing].map((cmd) =>
+      fromIO<Error, void>(this.logger.log('await', `run: ${cmd}`))
+        .chain(() => this.commandRunner.run(cmd, env))
+        .chain(() => fromIO(this.logger.log('complete', `end: ${cmd}`))),
+    );
+    return sequence_(taskEitherSeq, array)(hooks);
   }
 }

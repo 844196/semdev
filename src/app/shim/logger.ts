@@ -1,4 +1,4 @@
-import { IO } from 'fp-ts/lib/IO';
+import { IO, io } from 'fp-ts/lib/IO';
 import { default as signale, DefaultMethods } from 'signale';
 import { FunctionKeys } from 'utility-types';
 
@@ -7,6 +7,12 @@ export class SignaleLogger {
 
   public log(type: DefaultMethods, value: any) {
     return new IO(() => this.inner[type](value));
+  }
+}
+
+export class EmptyLogger implements Logger {
+  public log() {
+    return io.of<void>(undefined);
   }
 }
 

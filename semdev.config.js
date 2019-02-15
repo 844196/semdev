@@ -10,6 +10,7 @@ module.exports = {
         'yarn build',
       ],
       post: [
+        'yarn ci:type',
         'echo "Release ${NEXT_VERSION}!"',
       ],
     },

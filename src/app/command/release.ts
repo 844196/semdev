@@ -1,9 +1,9 @@
 import { left } from 'fp-ts/lib/Either';
 import { fromEither } from 'fp-ts/lib/TaskEither';
-import { CommandRunner } from '../../core/model/cli-hook-action';
 import { isVersionString, Version } from '../../core/model/version';
 import { ReleaseVersion } from '../../core/use-case/release-version';
 import { ReleaseVersionAdapter } from '../adapter/release-version-adapter';
+import { CommandRunner } from '../shim/command-runner';
 import { Git } from '../shim/git';
 import { Base } from './base';
 

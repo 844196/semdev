@@ -1,11 +1,10 @@
 import { right } from 'fp-ts/lib/Either';
-import { IO } from 'fp-ts/lib/IO';
 import { fromEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { Version } from '../../core/model/version';
 import { encode } from '../config';
 import { Git } from '../shim/git';
-import { Logger } from '../shim/logger';
+import { EmptyLogger, Logger } from '../shim/logger';
 import { PrepareVersionAdapter } from './prepare-version-adapter';
 
 const config = encode({
@@ -15,7 +14,7 @@ const config = encode({
 });
 let git: jest.Mocked<Git>;
 let adapter: PrepareVersionAdapter;
-let logger: jest.Mocked<Logger>;
+let logger: Logger;
 
 beforeEach(() => {
   git = jest.fn(
@@ -26,7 +25,8 @@ beforeEach(() => {
       };
     },
   )();
-  logger = jest.fn((): Logger => ({ log: jest.fn(() => new IO(() => undefined)) }))();
+  logger = new EmptyLogger();
+  jest.spyOn(logger, 'log');
   adapter = new PrepareVersionAdapter(config, git, logger);
 });
 
