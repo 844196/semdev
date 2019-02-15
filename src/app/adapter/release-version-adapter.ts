@@ -1,11 +1,10 @@
 import { reduceWithKey } from 'fp-ts/lib/Record';
 import { fromIO } from 'fp-ts/lib/TaskEither';
-import { CLIHookAction } from '../../core/model/cli-hook-action';
+import { CLIHookAction, CommandRunner } from '../../core/model/cli-hook-action';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { Version } from '../../core/model/version';
 import { ReleaseVersionPort } from '../../core/use-case/release-version';
 import { Config, toStringerConfig } from '../config';
-import { run } from '../shim/command-runner';
 import { Git } from '../shim/git';
 import { Logger } from '../shim/logger';
 import { latestVersion } from './mixin/latest-version';
@@ -18,9 +17,14 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
     runHook: (x) => fromIO(this.logger.log('start', `run: ${x.inspect()}`)),
   };
 
-  public constructor(private readonly config: Config, private readonly git: Git, private readonly logger: Logger) {
+  public constructor(
+    private readonly config: Config,
+    private readonly git: Git,
+    private readonly logger: Logger,
+    private readonly commandRunner: CommandRunner,
+  ) {
     this.hooks = reduceWithKey(this.config.hooks.release, { ...this.hooks }, (type, hooks, cmds) => {
-      hooks[type] = cmds.map((cmd) => new CLIHookAction(cmd, run, this.config.versionPrefix));
+      hooks[type] = cmds.map((cmd) => new CLIHookAction(cmd, this.commandRunner, this.config.versionPrefix));
       return hooks;
     });
   }

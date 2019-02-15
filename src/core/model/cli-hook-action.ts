@@ -4,7 +4,7 @@ import { Version } from './version';
 export class CLIHookAction {
   public constructor(
     private readonly command: string,
-    private readonly run: CommandRunner,
+    private readonly runner: CommandRunner,
     private readonly versionPrefix: string,
   ) {}
 
@@ -13,11 +13,13 @@ export class CLIHookAction {
   }
 
   public build(next: Version, prev: Version) {
-    return this.run(this.command, {
+    return this.runner.run(this.command, {
       NEXT_VERSION: next.toString({ versionPrefix: this.versionPrefix }),
       PREV_VERSION: prev.toString({ versionPrefix: this.versionPrefix }),
     });
   }
 }
 
-export type CommandRunner = (cmd: string, env: Record<string, string>) => TaskEither<Error, void>;
+export interface CommandRunner {
+  run(cmd: string, env: Record<string, string>): TaskEither<Error, void>;
+}

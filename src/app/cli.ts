@@ -6,6 +6,7 @@ import { default as simpleGit } from 'simple-git/promise';
 import { PrepareCommand } from './command/prepare';
 import { ReleaseCommand } from './command/release';
 import { defaultConfig, encode } from './config';
+import { runner } from './shim/command-runner';
 import { SimpleGitClient } from './shim/git';
 import { SignaleLogger } from './shim/logger';
 
@@ -45,6 +46,8 @@ cli
 cli
   .command('release <version>', 'Merge version development branch & create tag')
   .example(() => `${ME} merge v1.2.3`)
-  .action((version: string) => new ReleaseCommand({ config, logger, git }).run({}, version).then(exit));
+  .action((version: string) =>
+    new ReleaseCommand({ config, logger, git, commandRunner: runner }).run({}, version).then(exit),
+  );
 
 export { cli };

@@ -1,7 +1,7 @@
 import { right } from 'fp-ts/lib/Either';
 import { IO } from 'fp-ts/lib/IO';
 import { fromEither } from 'fp-ts/lib/TaskEither';
-import { CLIHookAction } from '../../core/model/cli-hook-action';
+import { CLIHookAction, CommandRunner } from '../../core/model/cli-hook-action';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { Version } from '../../core/model/version';
 import { encode } from '../config';
@@ -22,6 +22,7 @@ const config = encode({
 });
 let git: jest.Mocked<Git>;
 let logger: jest.Mocked<Logger>;
+let commandRunner: jest.Mocked<CommandRunner>;
 let adapter: ReleaseVersionAdapter;
 
 beforeEach(() => {
@@ -36,7 +37,8 @@ beforeEach(() => {
     },
   )();
   logger = jest.fn((): Logger => ({ log: jest.fn(() => new IO(() => undefined)) }))();
-  adapter = new ReleaseVersionAdapter(config, git, logger);
+  commandRunner = jest.fn()();
+  adapter = new ReleaseVersionAdapter(config, git, logger, commandRunner);
 });
 
 describe('ReleaseVersionAdapter', () => {
