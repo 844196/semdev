@@ -1,12 +1,13 @@
 import { default as cac } from 'cac';
 import { default as cosmiconfig } from 'cosmiconfig';
+import { default as execa } from 'execa';
 import { exit } from 'process';
 import { default as signale } from 'signale';
 import { default as simpleGit } from 'simple-git/promise';
 import { PrepareCommand } from './command/prepare';
 import { ReleaseCommand } from './command/release';
 import { defaultConfig, encode } from './config';
-import { runner } from './shim/command-runner';
+import { ExecaCommandRunner } from './shim/command-runner';
 import { SimpleGitClient } from './shim/git';
 import { SignaleLogger } from './shim/logger';
 
@@ -21,6 +22,9 @@ const logger = new SignaleLogger(signale);
 
 // git
 const git = new SimpleGitClient(simpleGit().silent(true));
+
+// command runner
+const commandRunner = new ExecaCommandRunner(execa, process.env);
 
 // cli
 const cli = cac(ME)
@@ -46,8 +50,6 @@ cli
 cli
   .command('release <version>', 'Merge version development branch & create tag')
   .example(() => `${ME} merge v1.2.3`)
-  .action((version: string) =>
-    new ReleaseCommand({ config, logger, git, commandRunner: runner }).run({}, version).then(exit),
-  );
+  .action((version: string) => new ReleaseCommand({ config, logger, git, commandRunner }).run({}, version).then(exit));
 
 export { cli };

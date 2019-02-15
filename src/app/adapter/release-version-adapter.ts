@@ -14,7 +14,7 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
   public readonly notify: ReleaseVersionPort['notify'] = {
     merged: (x) => fromIO(this.logger.log('success', `merged: ${x.toString(toStringerConfig(this.config))}`)),
     tagged: (x) => fromIO(this.logger.log('success', `tag created: ${x.toString(toStringerConfig(this.config))}`)),
-    runHook: (x) => fromIO(this.logger.log('start', `run: ${x.inspect()}`)),
+    runHook: (x) => fromIO(this.logger.log('await', `run: ${x.inspect()}`)),
   };
 
   public constructor(

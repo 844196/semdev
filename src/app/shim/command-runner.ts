@@ -1,16 +1,12 @@
-import { spawn } from 'child_process';
+import { ExecaStatic } from 'execa';
 import { toError } from 'fp-ts/lib/Either';
 import { tryCatch } from 'fp-ts/lib/TaskEither';
 import { CommandRunner } from '../../core/model/cli-hook-action';
 
-export const runner: CommandRunner = {
-  run: (cmd: string, env: Record<string, string> = {}) =>
-    tryCatch<Error, void>(
-      () =>
-        new Promise((ok, ng) => {
-          const p = spawn(cmd, { shell: true, env: { ...process.env, ...env } });
-          p.on('close', (code) => (code === 0 ? ok() : ng(`command failed: ${cmd}`)));
-        }),
-      toError,
-    ),
-};
+export class ExecaCommandRunner implements CommandRunner {
+  public constructor(private readonly inner: ExecaStatic, private readonly env: NodeJS.ProcessEnv) {}
+
+  public run(cmd: string, env: Record<string, string> = {}) {
+    return tryCatch(() => this.inner.shell(cmd, { env: { ...this.env, ...env } }), toError).map((): void => undefined);
+  }
+}

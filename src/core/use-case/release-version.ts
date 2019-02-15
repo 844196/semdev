@@ -31,7 +31,11 @@ export class ReleaseVersion {
 
     return this.port.latestVersion().chain((prevVersion) => {
       const sequenceHook = (type: 'pre' | 'post') =>
-        sequence_(taskEitherSeq, array)(this.port.hooks[type].map((h) => h.build(targetVersion, prevVersion)));
+        sequence_(taskEitherSeq, array)(
+          this.port.hooks[type].map((h) =>
+            this.port.notify.runHook(h).chain(() => h.build(targetVersion, prevVersion)),
+          ),
+        );
       return sequenceHook('pre')
         .chain(() => mergeBranch(ReleaseBranch.of(targetVersion)))
         .chain(() => createTag(targetVersion))

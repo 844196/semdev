@@ -55,7 +55,7 @@ describe('ReleaseVersionAdapter', () => {
 
     it('runHook()', async () => {
       await adapter.notify.runHook(jest.fn<CLIHookAction>(() => ({ inspect: () => 'pwd' }))());
-      expect(logger.log).toBeCalledWith('start', 'run: pwd');
+      expect(logger.log).toBeCalledWith('await', 'run: pwd');
     });
   });
 
