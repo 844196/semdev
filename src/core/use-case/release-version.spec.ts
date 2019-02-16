@@ -1,7 +1,7 @@
 import { right } from 'fp-ts/lib/Either';
 import { fromEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
-import { Version } from '../model/version';
+import { ReleasedVersion, WipVersion } from '../model/version';
 import { ReleaseVersion, ReleaseVersionPort } from './release-version';
 
 let port: jest.Mocked<ReleaseVersionPort>;
@@ -27,10 +27,10 @@ beforeEach(() => {
 
 describe('ReleaseVersion', () => {
   it('byVersion()', async () => {
-    const latestVersion = Version.wip(1, 0, 0);
+    const latestVersion = ReleasedVersion.of(1, 0, 0);
     port.latestVersion.mockReturnValue(fromEither(right(latestVersion)));
 
-    const releaseVersion = Version.wip(1, 1, 0);
+    const releaseVersion = WipVersion.of(1, 1, 0);
     const expectedReleaseBranch = ReleaseBranch.of(releaseVersion);
 
     const rtn = await useCase.byVersion(releaseVersion).run();

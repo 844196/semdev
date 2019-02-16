@@ -1,7 +1,7 @@
 import { right } from 'fp-ts/lib/Either';
 import { fromEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../../core/model/release-branch';
-import { Version } from '../../core/model/version';
+import { WipVersion } from '../../core/model/version';
 import { encode } from '../config';
 import { CommandRunner } from '../shim/command-runner';
 import { Git } from '../shim/git';
@@ -45,18 +45,18 @@ beforeEach(() => {
 describe('ReleaseVersionAdapter', () => {
   describe('notify', () => {
     it('merged()', async () => {
-      await adapter.notify.merged(ReleaseBranch.of(Version.wip(1, 2, 3)));
+      await adapter.notify.merged(ReleaseBranch.of(WipVersion.of(1, 2, 3)));
       expect(logger.log).toBeCalledWith('success', 'merged: release/v1.2.3');
     });
 
     it('tagged()', async () => {
-      await adapter.notify.tagged(Version.wip(1, 2, 3));
+      await adapter.notify.tagged(WipVersion.of(1, 2, 3));
       expect(logger.log).toBeCalledWith('success', 'tag created: v1.2.3');
     });
   });
 
   it('mergeBranch()', async () => {
-    const branch = ReleaseBranch.of(Version.wip(1, 0, 0));
+    const branch = ReleaseBranch.of(WipVersion.of(1, 0, 0));
 
     await adapter.mergeBranch(branch).run();
 
@@ -65,7 +65,7 @@ describe('ReleaseVersionAdapter', () => {
   });
 
   it('createTag()', async () => {
-    const version = Version.wip(1, 0, 0);
+    const version = WipVersion.of(1, 0, 0);
 
     await adapter.createTag(version).run();
     expect(git.checkout).toHaveBeenCalledWith('master');

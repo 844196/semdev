@@ -2,7 +2,7 @@ import { right } from 'fp-ts/lib/Either';
 import { fromEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
-import { Version } from '../model/version';
+import { ReleasedVersion, WipVersion } from '../model/version';
 import { PrepareVersion, PrepareVersionPort } from './prepare-version';
 
 let port: jest.Mocked<PrepareVersionPort>;
@@ -29,16 +29,16 @@ describe('PrepareVersion', () => {
   it('byReleaseType()', async () => {
     const releaseType = ReleaseType.patch;
 
-    port.latestVersion.mockReturnValue(fromEither(right(Version.released(1, 2, 1))));
+    port.latestVersion.mockReturnValue(fromEither(right(ReleasedVersion.of(1, 2, 1))));
 
     const rtn = await useCase.byReleaseType(releaseType).run();
     expect(rtn.isRight()).toBeTruthy();
     expect(port.latestVersion).toHaveBeenCalled();
-    expect(port.createBranch).toHaveBeenCalledWith(ReleaseBranch.of(Version.wip(1, 2, 2)));
+    expect(port.createBranch).toHaveBeenCalledWith(ReleaseBranch.of(WipVersion.of(1, 2, 2)));
   });
 
   it('byVersion()', async () => {
-    const version = Version.wip(1, 0, 0);
+    const version = WipVersion.of(1, 0, 0);
     const expectedReleaseBranch = ReleaseBranch.of(version);
 
     const rtn = await useCase.byVersion(version).run();
