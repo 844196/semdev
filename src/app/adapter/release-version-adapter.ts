@@ -43,11 +43,11 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
       NEXT_VERSION: next.toString(toStringerConfig(this.config)),
       PREV_VERSION: prev.toString(toStringerConfig(this.config)),
     };
-    const hooks = this.config.hooks.release[timing].map((cmd) =>
-      fromIO<Error, void>(this.logger.log('await', `run: ${cmd}`))
-        .chain(() => this.commandRunner.run(cmd, env))
-        .chain(() => fromIO(this.logger.log('complete', `end: ${cmd}`))),
-    );
-    return sequence_(taskEitherSeq, array)(hooks);
+    const hooks = this.config.hooks.release[timing].map((cmd, idx, cmds) => {
+      const log = fromIO<Error, void>(this.logger.logInteractive('await', `[${idx + 1}/${cmds.length}] ${cmd}`));
+      const run = this.commandRunner.run(cmd, env);
+      return log.chain(() => run);
+    });
+    return sequence_(taskEitherSeq, array)(hooks).chain(() => fromIO(this.logger.logInteractive('success', '')));
   }
 }

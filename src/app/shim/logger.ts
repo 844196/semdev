@@ -5,13 +5,21 @@ import { FunctionKeys } from 'utility-types';
 export class SignaleLogger {
   public constructor(private readonly inner: typeof signale) {}
 
-  public log(type: DefaultMethods, value: any) {
-    return new IO(() => this.inner[type](value));
+  public log(type: DefaultMethods, ...value: any[]) {
+    return new IO(() => this.inner[type](...value));
+  }
+
+  public logInteractive(type: DefaultMethods, ...value: any[]) {
+    return new IO(() => new this.inner.Signale({ interactive: true })[type](...value));
   }
 }
 
 export class EmptyLogger implements Logger {
   public log() {
+    return io.of<void>(undefined);
+  }
+
+  public logInteractive() {
     return io.of<void>(undefined);
   }
 }

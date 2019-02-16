@@ -37,6 +37,7 @@ beforeEach(() => {
   )();
   logger = new EmptyLogger();
   jest.spyOn(logger, 'log');
+  jest.spyOn(logger, 'logInteractive');
   commandRunner = jest.fn()();
   adapter = new ReleaseVersionAdapter(config, git, logger, commandRunner);
 });
