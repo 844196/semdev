@@ -1,7 +1,6 @@
-import { left } from 'fp-ts/lib/Either';
-import { fromEither } from 'fp-ts/lib/TaskEither';
+import { fromLeft } from 'fp-ts/lib/TaskEither';
 import { isReleaseType } from '../../core/model/release-type';
-import { isVersionString, WipVersion } from '../../core/model/version';
+import { versionStringParser } from '../../core/model/version-string-parser';
 import { PrepareVersion } from '../../core/use-case/prepare-version';
 import { PrepareVersionAdapter } from '../adapter/prepare-version-adapter';
 import { Git } from '../shim/git';
@@ -29,10 +28,11 @@ export class PrepareCommand extends Base<PrepareCommandDependency, [string], Pre
       return useCase.byReleaseType(releaseTypeOrVersionStr);
     }
 
-    if (isVersionString(releaseTypeOrVersionStr)) {
-      return useCase.byVersion(WipVersion.fromString(releaseTypeOrVersionStr));
+    const parsed = versionStringParser.parse(releaseTypeOrVersionStr);
+    if (parsed.isRight()) {
+      return useCase.byVersion(parsed.value.toWipVersion());
     }
 
-    return fromEither(left(new Error(`invalid release type or version given: ${releaseTypeOrVersionStr}`)));
+    return fromLeft(new Error(`invalid release type or version given: ${releaseTypeOrVersionStr}`));
   }
 }

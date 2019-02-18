@@ -1,13 +1,18 @@
-import { findLast } from 'fp-ts/lib/Array';
-import { identity } from 'fp-ts/lib/function';
-import { filter, map, toArray } from 'fp-ts/lib/Set';
+import { last, rights, sort } from 'fp-ts/lib/Array';
+import { identity } from 'fp-ts/lib/Identity';
 import { TaskEither } from 'fp-ts/lib/TaskEither';
-import { initialVersion, isVersionString, ordVersion, ReleasedVersion, Version } from '../../../core/model/version';
-
-const pickLatestReleased = (vs: Set<Version>) => findLast(toArray(ordVersion)(vs), (v) => v.isReleased());
+import { initialVersion, ordVersion, Version } from '../../../core/model/version';
+import { versionStringParser } from '../../../core/model/version-string-parser';
 
 export const latestVersion = <L>(tags: () => TaskEither<L, Set<string>>) => (): TaskEither<L, Version> =>
-  tags().map((ts) => {
-    const vs = map(ordVersion)(filter(ts, isVersionString), ReleasedVersion.fromString);
-    return pickLatestReleased(vs).fold<Version>(initialVersion, identity);
-  });
+  tags().map(
+    (ts) =>
+      identity
+        .of([...ts])
+        .map((xs) => xs.map(versionStringParser.parse))
+        .map(rights)
+        .map((xs) => xs.map((x) => x.toReleasedVersion()))
+        .map(sort(ordVersion))
+        .map(last)
+        .map((x) => x.getOrElse(initialVersion)).value,
+  );

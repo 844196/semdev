@@ -1,6 +1,5 @@
-import { left } from 'fp-ts/lib/Either';
-import { fromEither } from 'fp-ts/lib/TaskEither';
-import { isVersionString, WipVersion } from '../../core/model/version';
+import { fromLeft } from 'fp-ts/lib/TaskEither';
+import { versionStringParser } from '../../core/model/version-string-parser';
 import { ReleaseVersion } from '../../core/use-case/release-version';
 import { ReleaseVersionAdapter } from '../adapter/release-version-adapter';
 import { CommandRunner } from '../shim/command-runner';
@@ -28,10 +27,11 @@ export class ReleaseCommand extends Base<ReleaseCommandDependency, [string], Rel
     );
     const useCase = new ReleaseVersion(adapter);
 
-    if (isVersionString(versionStr)) {
-      return useCase.byVersion(WipVersion.fromString(versionStr));
+    const parsed = versionStringParser.parse(versionStr);
+    if (parsed.isRight()) {
+      return useCase.byVersion(parsed.value.toWipVersion());
     }
 
-    return fromEither(left(new Error(`invalid version given: ${versionStr}`)));
+    return fromLeft(new Error(`invalid version given: ${versionStr}`));
   }
 }

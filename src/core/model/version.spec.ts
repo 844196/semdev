@@ -1,5 +1,5 @@
 import { ReleaseType } from './release-type';
-import { isVersionString, ordVersion, ReleasedVersion, setoidVersion, VersionString, WipVersion } from './version';
+import { ordVersion, ReleasedVersion, setoidVersion, WipVersion } from './version';
 
 describe('Version', () => {
   describe('increment()', () => {
@@ -52,17 +52,6 @@ describe('ReleasedVersion', () => {
     expect(v123Alpha1.preRelease).toBe('alpha.1');
   });
 
-  it('fromString()', () => {
-    expect(ReleasedVersion.fromString('1.2.3' as VersionString)).toEqual(ReleasedVersion.of(1, 2, 3));
-    expect(ReleasedVersion.fromString('v1.2.3' as VersionString)).toEqual(ReleasedVersion.of(1, 2, 3));
-    expect(ReleasedVersion.fromString('1.2.3-alpha.1' as VersionString)).toEqual(
-      ReleasedVersion.of(1, 2, 3, 'alpha.1'),
-    );
-    expect(ReleasedVersion.fromString('v1.2.3-alpha.1' as VersionString)).toEqual(
-      ReleasedVersion.of(1, 2, 3, 'alpha.1'),
-    );
-  });
-
   it('isReleased()', () => {
     expect(ReleasedVersion.of(1, 2, 3).isReleased()).toBeTruthy();
   });
@@ -79,11 +68,6 @@ describe('WipVersion', () => {
     expect(v123.minor).toBe(2);
     expect(v123.patch).toBe(3);
     expect(v123.preRelease).toBe('');
-  });
-
-  it('fromString()', () => {
-    expect(WipVersion.fromString('1.2.3' as VersionString)).toEqual(WipVersion.of(1, 2, 3));
-    expect(WipVersion.fromString('v1.2.3' as VersionString)).toEqual(WipVersion.of(1, 2, 3));
   });
 
   it('isReleased()', () => {
@@ -222,18 +206,5 @@ describe('ordVersion', () => {
     patterns.forEach(({ pattern, a, b, expected }) => {
       it(pattern, () => expect(ordVersion.compare(a, b)).toBe(expected));
     });
-  });
-});
-
-describe('isVersionString()', () => {
-  it('valid', () => {
-    expect(isVersionString('1.2.3')).toBeTruthy();
-    expect(isVersionString('v1.2.3')).toBeTruthy();
-    expect(isVersionString('1.2.3-alpha.1')).toBeTruthy();
-    expect(isVersionString('v1.2.3-alpha.1')).toBeTruthy();
-  });
-
-  it('invalid', () => {
-    expect(isVersionString('aaa')).toBeFalsy();
   });
 });
