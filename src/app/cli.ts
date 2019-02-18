@@ -4,11 +4,11 @@ import { default as execa } from 'execa';
 import { exit } from 'process';
 import { default as signale } from 'signale';
 import { default as simpleGit } from 'simple-git/promise';
-import { PrepareCommand } from './command/prepare';
-import { ReleaseCommand } from './command/release';
+import { PrepareCommand, PrepareCommandOption } from './command/prepare';
+import { ReleaseCommand, ReleaseCommandOption } from './command/release';
 import { defaultConfig, encode } from './config';
-import { ExecaCommandRunner } from './shim/command-runner';
-import { SimpleGitClient } from './shim/git';
+import { EmptyCommandRunner, ExecaCommandRunner } from './shim/command-runner';
+import { ReadonlyGitClient, SimpleGitClient } from './shim/git';
 import { SignaleLogger } from './shim/logger';
 
 const ME = 'semdev';
@@ -22,9 +22,11 @@ const logger = new SignaleLogger(signale);
 
 // git
 const git = new SimpleGitClient(simpleGit().silent(true));
+const readonlyGit = new ReadonlyGitClient(simpleGit().silent(true));
 
 // command runner
 const commandRunner = new ExecaCommandRunner(execa, process.env);
+const emptyCommandRunner = new EmptyCommandRunner();
 
 // cli
 const cli = cac(ME)
@@ -40,16 +42,21 @@ cli.on('command:*', () =>
 
 cli
   .command('prepare <major|minor|patch|new-version>', 'Prepare for next version development')
-  .option('--verbose', 'Print progress messages', { default: false })
-  .example(() => `${ME} prepare major`)
-  .example(() => `${ME} prepare v1.2.3`)
-  .action((releaseTypeOrVersion: string, opts: { verbose: boolean }) =>
-    new PrepareCommand({ config, logger, git }).run(opts, releaseTypeOrVersion).then(exit),
+  .option('--dry-run', 'Dry run', { default: false })
+  .example(`${ME} prepare major`)
+  .example(`${ME} prepare v1.2.3`)
+  .action((releaseTypeOrVersion: string, opts: PrepareCommandOption) =>
+    new PrepareCommand({ config, logger, git, readonlyGit }).run(opts, releaseTypeOrVersion).then(exit),
   );
 
 cli
   .command('release <version>', 'Merge version development branch & create tag')
-  .example(() => `${ME} merge v1.2.3`)
-  .action((version: string) => new ReleaseCommand({ config, logger, git, commandRunner }).run({}, version).then(exit));
+  .option('--dry-run', 'Dry run', { default: false })
+  .example(`${ME} merge v1.2.3`)
+  .action((version: string, opts: ReleaseCommandOption) =>
+    new ReleaseCommand({ config, logger, git, readonlyGit, commandRunner, emptyCommandRunner })
+      .run(opts, version)
+      .then(exit),
+  );
 
 export { cli };

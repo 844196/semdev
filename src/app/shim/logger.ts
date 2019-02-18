@@ -14,6 +14,8 @@ export class SignaleLogger {
   }
 }
 
+export type Logger = { [P in FunctionKeys<SignaleLogger>]: SignaleLogger[P] };
+
 export class EmptyLogger implements Logger {
   public log() {
     return io.of<void>(undefined);
@@ -23,5 +25,3 @@ export class EmptyLogger implements Logger {
     return io.of<void>(undefined);
   }
 }
-
-export type Logger = { [P in FunctionKeys<SignaleLogger>]: SignaleLogger[P] };

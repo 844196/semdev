@@ -1,5 +1,5 @@
 import { toError } from 'fp-ts/lib/Either';
-import { tryCatch } from 'fp-ts/lib/TaskEither';
+import { taskEither, tryCatch } from 'fp-ts/lib/TaskEither';
 import { SimpleGit } from 'simple-git/promise';
 import { FunctionKeys } from 'utility-types';
 
@@ -23,12 +23,30 @@ export class SimpleGitClient {
   }
 
   public createTag(name: string) {
-    return tryCatch(() => this.inner.addTag(name), toError);
+    return tryCatch(() => this.inner.addTag(name), toError).map((): void => undefined);
   }
 
   public merge(branch: string, mergeType: '--ff' | '--no-ff') {
-    return tryCatch(() => this.inner.merge([branch, mergeType]), toError);
+    return tryCatch(() => this.inner.merge([branch, mergeType]), toError).map((): void => undefined);
   }
 }
 
 export type Git = { [P in FunctionKeys<SimpleGitClient>]: SimpleGitClient[P] };
+
+export class ReadonlyGitClient extends SimpleGitClient implements Git {
+  public checkout() {
+    return taskEither.of<Error, void>(undefined);
+  }
+
+  public createBranch() {
+    return taskEither.of<Error, void>(undefined);
+  }
+
+  public createTag() {
+    return taskEither.of<Error, void>(undefined);
+  }
+
+  public merge() {
+    return taskEither.of<Error, void>(undefined);
+  }
+}

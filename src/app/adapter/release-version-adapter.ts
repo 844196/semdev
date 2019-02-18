@@ -48,6 +48,8 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
       const run = this.commandRunner.run(cmd, env);
       return log.chain(() => run);
     });
-    return sequence_(taskEitherSeq, array)(hooks).chain(() => fromIO(this.logger.logInteractive('success', '')));
+    return sequence_(taskEitherSeq, array)(hooks).chain(() =>
+      fromIO(this.logger.logInteractive('success', `complete ${timing} hooks`)),
+    );
   }
 }

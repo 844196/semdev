@@ -7,9 +7,22 @@ import { PrepareVersionAdapter } from '../adapter/prepare-version-adapter';
 import { Git } from '../shim/git';
 import { Base } from './base';
 
-export class PrepareCommand extends Base<{ git: Git }, [string], { verbose: boolean }> {
-  protected build(_: any, releaseTypeOrVersionStr: string) {
-    const adapter = new PrepareVersionAdapter(this.deps.config, this.deps.git, this.deps.logger);
+export interface PrepareCommandDependency {
+  git: Git;
+  readonlyGit: Git;
+}
+
+export interface PrepareCommandOption {
+  dryRun: boolean;
+}
+
+export class PrepareCommand extends Base<PrepareCommandDependency, [string], PrepareCommandOption> {
+  protected build({ dryRun }: PrepareCommandOption, releaseTypeOrVersionStr: string) {
+    const adapter = new PrepareVersionAdapter(
+      this.deps.config,
+      dryRun ? this.deps.readonlyGit : this.deps.git,
+      this.deps.logger,
+    );
     const useCase = new PrepareVersion(adapter);
 
     if (isReleaseType(releaseTypeOrVersionStr)) {

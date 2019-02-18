@@ -7,13 +7,24 @@ import { CommandRunner } from '../shim/command-runner';
 import { Git } from '../shim/git';
 import { Base } from './base';
 
-export class ReleaseCommand extends Base<{ git: Git; commandRunner: CommandRunner }, [string]> {
-  protected build(_: any, versionStr: string) {
+export interface ReleaseCommandDependency {
+  git: Git;
+  readonlyGit: Git;
+  commandRunner: CommandRunner;
+  emptyCommandRunner: CommandRunner;
+}
+
+export interface ReleaseCommandOption {
+  dryRun: boolean;
+}
+
+export class ReleaseCommand extends Base<ReleaseCommandDependency, [string], ReleaseCommandOption> {
+  protected build({ dryRun }: ReleaseCommandOption, versionStr: string) {
     const adapter = new ReleaseVersionAdapter(
       this.deps.config,
-      this.deps.git,
+      dryRun ? this.deps.readonlyGit : this.deps.git,
       this.deps.logger,
-      this.deps.commandRunner,
+      dryRun ? this.deps.emptyCommandRunner : this.deps.commandRunner,
     );
     const useCase = new ReleaseVersion(adapter);
 

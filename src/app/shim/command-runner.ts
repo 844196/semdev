@@ -1,6 +1,6 @@
 import { ExecaStatic } from 'execa';
 import { toError } from 'fp-ts/lib/Either';
-import { tryCatch } from 'fp-ts/lib/TaskEither';
+import { taskEither, tryCatch } from 'fp-ts/lib/TaskEither';
 import { FunctionKeys } from 'utility-types';
 
 export class ExecaCommandRunner {
@@ -12,3 +12,9 @@ export class ExecaCommandRunner {
 }
 
 export type CommandRunner = { [P in FunctionKeys<ExecaCommandRunner>]: ExecaCommandRunner[P] };
+
+export class EmptyCommandRunner implements CommandRunner {
+  public run() {
+    return taskEither.of<Error, void>(undefined);
+  }
+}
