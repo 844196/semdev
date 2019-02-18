@@ -36,7 +36,7 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
       .localBranches()
       .filterOrElse(
         (branches) => [...branches].includes(branchName),
-        new Error(`release branch '${branchName}' does not exits`),
+        new Error(`release branch '${branchName}' does not exists`),
       );
 
     return tagNotExists.chain(() => branchExists).map((): void => undefined);

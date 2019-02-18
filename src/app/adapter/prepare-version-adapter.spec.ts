@@ -1,10 +1,11 @@
 import { right } from 'fp-ts/lib/Either';
+import { io } from 'fp-ts/lib/IO';
 import { fromEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../../core/model/release-branch';
 import { WipVersion } from '../../core/model/version';
 import { encode } from '../config';
 import { Git } from '../shim/git';
-import { EmptyLogger, Logger } from '../shim/logger';
+import { Logger } from '../shim/logger';
 import { PrepareVersionAdapter } from './prepare-version-adapter';
 
 const config = encode({
@@ -25,8 +26,14 @@ beforeEach(() => {
       };
     },
   )();
-  logger = new EmptyLogger();
-  jest.spyOn(logger, 'log');
+  logger = jest.fn(
+    (): Logger => {
+      return {
+        log: jest.fn(() => io.of<void>(undefined)),
+        logInteractive: jest.fn(() => io.of<void>(undefined)),
+      };
+    },
+  )();
   adapter = new PrepareVersionAdapter(config, git, logger);
 });
 

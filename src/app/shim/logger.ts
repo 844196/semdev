@@ -1,4 +1,4 @@
-import { IO, io } from 'fp-ts/lib/IO';
+import { IO } from 'fp-ts/lib/IO';
 import { default as signale, DefaultMethods } from 'signale';
 import { FunctionKeys } from 'utility-types';
 
@@ -15,13 +15,3 @@ export class SignaleLogger {
 }
 
 export type Logger = { [P in FunctionKeys<SignaleLogger>]: SignaleLogger[P] };
-
-export class EmptyLogger implements Logger {
-  public log() {
-    return io.of<void>(undefined);
-  }
-
-  public logInteractive() {
-    return io.of<void>(undefined);
-  }
-}

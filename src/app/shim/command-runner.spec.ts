@@ -1,9 +1,10 @@
 import { ExecaStatic } from 'execa';
-import { ExecaCommandRunner } from './command-runner';
+import { EmptyCommandRunner, ExecaCommandRunner } from './command-runner';
 
 let execa: jest.Mocked<ExecaStatic>;
 let env: NodeJS.ProcessEnv;
-let subject: ExecaCommandRunner;
+let execaCommandRunner: ExecaCommandRunner;
+let emptyCommandRunner: EmptyCommandRunner;
 
 beforeEach(() => {
   execa = jest.fn(() => {
@@ -12,19 +13,27 @@ beforeEach(() => {
     };
   })();
   env = { USER: 's083027' };
-  subject = new ExecaCommandRunner(execa, env);
+  execaCommandRunner = new ExecaCommandRunner(execa, env);
+  emptyCommandRunner = new EmptyCommandRunner();
 });
 
 describe('ExecaCommandRunner', () => {
   describe('run()', () => {
     it('no env', async () => {
-      await subject.run('pwd').run();
+      await execaCommandRunner.run('pwd').run();
       expect(execa.shell).toHaveBeenCalledWith('pwd', { env: { USER: 's083027' } });
     });
 
     it('passed env', async () => {
-      await subject.run('echo $MSG', { MSG: 'hi' }).run();
+      await execaCommandRunner.run('echo $MSG', { MSG: 'hi' }).run();
       expect(execa.shell).toHaveBeenCalledWith('echo $MSG', { env: { USER: 's083027', MSG: 'hi' } });
     });
+  });
+});
+
+describe('EmptyCommandRunner', () => {
+  it('run()', async () => {
+    const rtn = await emptyCommandRunner.run().run();
+    expect(rtn.isRight()).toBeTruthy();
   });
 });
