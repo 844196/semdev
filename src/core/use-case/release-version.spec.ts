@@ -19,6 +19,7 @@ beforeEach(() => {
           merged: jest.fn((a) => fromEither(right(a))),
           tagged: jest.fn((a) => fromEither(right(a))),
         },
+        ensureReleasable: jest.fn(() => fromEither(right(undefined))),
       };
     },
   )();

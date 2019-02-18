@@ -2,7 +2,7 @@ import { array } from 'fp-ts/lib/Array';
 import { sequence_ } from 'fp-ts/lib/Foldable2v';
 import { fromIO, taskEitherSeq } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../../core/model/release-branch';
-import { Version } from '../../core/model/version';
+import { Version, WipVersion } from '../../core/model/version';
 import { ReleaseVersionPort } from '../../core/use-case/release-version';
 import { Config, toStringerConfig } from '../config';
 import { CommandRunner } from '../shim/command-runner';
@@ -24,6 +24,23 @@ export class ReleaseVersionAdapter implements ReleaseVersionPort {
   ) {}
 
   public latestVersion = latestVersion(this.git.tags.bind(this.git));
+
+  public ensureReleasable(version: WipVersion) {
+    const tagName = version.toString(toStringerConfig(this.config));
+    const tagNotExists = this.git
+      .tags()
+      .filterOrElse((tags) => [...tags].includes(tagName) === false, new Error(`${tagName} already released`));
+
+    const branchName = ReleaseBranch.of(version).toString(toStringerConfig(this.config));
+    const branchExists = this.git
+      .localBranches()
+      .filterOrElse(
+        (branches) => [...branches].includes(branchName),
+        new Error(`release branch '${branchName}' does not exits`),
+      );
+
+    return tagNotExists.chain(() => branchExists).map((): void => undefined);
+  }
 
   public mergeBranch(branch: ReleaseBranch) {
     return this.git
