@@ -4,14 +4,13 @@ import { default as execa } from 'execa';
 import { exit } from 'process';
 import { default as signale } from 'signale';
 import { default as simpleGit } from 'simple-git/promise';
+import { name as ME, version as VERSION } from '../../package.json';
 import { PrepareCommand, PrepareCommandOption } from './command/prepare';
 import { ReleaseCommand, ReleaseCommandOption } from './command/release';
 import { defaultConfig, encode } from './config';
 import { EmptyCommandRunner, ExecaCommandRunner } from './shim/command-runner';
 import { ReadonlyGitClient, SimpleGitClient } from './shim/git';
 import { SignaleLogger } from './shim/logger';
-
-const ME = 'semdev';
 
 // config
 const found = cosmiconfig(ME).searchSync();
@@ -30,7 +29,7 @@ const emptyCommandRunner = new EmptyCommandRunner();
 
 // cli
 const cli = cac(ME)
-  .version('0.0.0')
+  .version(VERSION)
   .help();
 
 cli.on('command:*', () =>
@@ -52,7 +51,7 @@ cli
 cli
   .command('release <version>', 'Merge version development branch & create tag')
   .option('--dry-run', 'Dry run', { default: false })
-  .example(`${ME} merge v1.2.3`)
+  .example(`${ME} release v1.2.3`)
   .action((version: string, opts: ReleaseCommandOption) =>
     new ReleaseCommand({ config, logger, git, readonlyGit, commandRunner, emptyCommandRunner })
       .run(opts, version)

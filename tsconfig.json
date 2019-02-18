@@ -13,7 +13,8 @@
     "removeComments": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "outDir": "./build/"
+    "outDir": "./build/",
+    "resolveJsonModule": true,
   },
   "exclude": ["**/*.spec.ts"]
 }
