@@ -1,12 +1,12 @@
 import { TaskEither } from 'fp-ts/lib/TaskEither';
+import { default as signale } from 'signale';
 import { Config } from '../config';
-import { Logger } from '../shim/logger';
 
 export abstract class Base<Deps extends {}, Args extends string[] = [], Opts extends {} = {}> {
   public constructor(
     protected readonly deps: Deps & {
       config: Config;
-      logger: Logger;
+      signale: typeof signale;
     },
   ) {}
 
@@ -18,7 +18,7 @@ export abstract class Base<Deps extends {}, Args extends string[] = [], Opts ext
         .run()
         .then((res) => (res.isRight() ? Promise.resolve(res.value) : Promise.reject(res.value)));
     } catch (err) {
-      this.deps.logger.log('error', err).run();
+      this.deps.signale.error(err);
       return 1;
     }
     return 0;

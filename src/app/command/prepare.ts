@@ -1,14 +1,17 @@
+import { ExecaStatic } from 'execa';
 import { fromLeft } from 'fp-ts/lib/TaskEither';
+import { SimpleGit } from 'simple-git/promise';
 import { isReleaseType } from '../../core/model/release-type';
 import { versionStringParser } from '../../core/model/version-string-parser';
 import { PrepareVersion } from '../../core/use-case/prepare-version';
-import { PrepareVersionAdapter } from '../adapter/prepare-version-adapter';
-import { Git } from '../shim/git';
+import { ConfigAdapter } from '../adapter/config-adapter';
+import { ReadonlySimpleGitAdapter, SimpleGitAdapter } from '../adapter/git-adapter';
+import { SignaleMessageAdapter } from '../adapter/message-adapter';
 import { Base } from './base';
 
 export interface PrepareCommandDependency {
-  git: Git;
-  readonlyGit: Git;
+  simpleGit: SimpleGit;
+  execa: ExecaStatic;
 }
 
 export interface PrepareCommandOption {
@@ -17,12 +20,11 @@ export interface PrepareCommandOption {
 
 export class PrepareCommand extends Base<PrepareCommandDependency, [string], PrepareCommandOption> {
   protected build({ dryRun }: PrepareCommandOption, releaseTypeOrVersionStr: string) {
-    const adapter = new PrepareVersionAdapter(
-      this.deps.config,
-      dryRun ? this.deps.readonlyGit : this.deps.git,
-      this.deps.logger,
+    const useCase = new PrepareVersion(
+      new ConfigAdapter(this.deps.config),
+      dryRun ? new ReadonlySimpleGitAdapter(this.deps.simpleGit) : new SimpleGitAdapter(this.deps.simpleGit),
+      new SignaleMessageAdapter(this.deps.signale),
     );
-    const useCase = new PrepareVersion(adapter);
 
     if (isReleaseType(releaseTypeOrVersionStr)) {
       return useCase.byReleaseType(releaseTypeOrVersionStr);

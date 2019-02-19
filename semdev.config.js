@@ -7,11 +7,8 @@ module.exports = {
       pre: [
         'yarn ci:type',
         'yarn ci:lint',
+        'yarn ci:test --no-coverage',
         'yarn build',
-      ],
-      post: [
-        'yarn ci:type',
-        'echo "Release ${NEXT_VERSION}!"',
       ],
     },
   },

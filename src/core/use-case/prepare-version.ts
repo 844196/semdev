@@ -1,39 +1,30 @@
-import { constant } from 'fp-ts/lib/function';
-import { TaskEither } from 'fp-ts/lib/TaskEither';
 import { ReleaseBranch } from '../model/release-branch';
 import { ReleaseType } from '../model/release-type';
-import { Version, WipVersion } from '../model/version';
-import { NotifiablePort } from './notifiable-port';
-
-interface NotificationType {
-  detectedLatest: Version;
-  computedNext: Version;
-  createdBranch: ReleaseBranch;
-}
-
-export interface PrepareVersionPort extends NotifiablePort<NotificationType> {
-  latestVersion(): TaskEither<Error, Version>;
-  createBranch(branch: ReleaseBranch): TaskEither<Error, void>;
-}
+import { WipVersion } from '../model/version';
+import { ConfigPort } from '../port/config-port';
+import { GitPort } from '../port/git-port';
+import { MessagePort, MessageType } from '../port/message-port';
+import { computeLatestVersion } from './mixin/compute-latest-version';
+import { releaseBranchAsString } from './mixin/stringer';
 
 export class PrepareVersion {
-  public constructor(private readonly port: PrepareVersionPort) {}
+  private readonly computeLatestVersion = computeLatestVersion(this.git);
+  private readonly releaseBranchAsString = releaseBranchAsString(this.config);
+
+  public constructor(
+    private readonly config: ConfigPort,
+    private readonly git: GitPort,
+    private readonly message: MessagePort,
+  ) {}
 
   public byReleaseType(releaseType: ReleaseType) {
-    const detectLatestVersion = () =>
-      this.port.latestVersion().chain((latest) => this.port.notify.detectedLatest(latest).map(constant(latest)));
-    const computeNextVersion = (latest: Version) => {
-      const next = latest.increment(releaseType);
-      return this.port.notify.computedNext(next).map(constant(next));
-    };
-
-    return detectLatestVersion()
-      .chain(computeNextVersion)
-      .chain((next) => this.byVersion(next));
+    return this.computeLatestVersion().chain((latest) => this.byVersion(latest.increment(releaseType)));
   }
 
   public byVersion(version: WipVersion) {
-    const branch = ReleaseBranch.of(version);
-    return this.port.createBranch(branch).chain(() => this.port.notify.createdBranch(branch));
+    const branchName = this.releaseBranchAsString(ReleaseBranch.of(version));
+    return this.git
+      .createBranch(branchName, this.config.masterBranch())
+      .chain(() => this.message.send(MessageType.SUCCESS, `create development branch: ${branchName}`));
   }
 }
