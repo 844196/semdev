@@ -1,4 +1,5 @@
 import { toError } from 'fp-ts/lib/Either';
+import { constVoid } from 'fp-ts/lib/function';
 import { taskEither, tryCatch } from 'fp-ts/lib/TaskEither';
 import { SimpleGit } from 'simple-git/promise';
 import { GitPort } from '../../core/port/git-port';
@@ -23,11 +24,11 @@ export class SimpleGitAdapter implements GitPort {
   }
 
   public createTag(name: string) {
-    return tryCatch(() => this.simpleGit.addTag(name), toError).map((): void => undefined);
+    return tryCatch(() => this.simpleGit.addTag(name), toError).map(constVoid);
   }
 
   public merge(branch: string, mergeType: '--ff' | '--no-ff') {
-    return tryCatch(() => this.simpleGit.merge([branch, mergeType]), toError).map((): void => undefined);
+    return tryCatch(() => this.simpleGit.merge([branch, mergeType]), toError).map(constVoid);
   }
 }
 
